@@ -101,7 +101,7 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", _GLOBAL_COMPANY
-            VALUE "LegalCopyright", "Copyright (c) 2026 Upp Tecnologia. Baseado no MicroSIP (c) 2011-2025 www.microsip.org, licenca GNU GPL v2."
+            VALUE "LegalCopyright", "Copyright (c) 2026 Upp Tecnologia. Baseado no MicroSIP (c) 2011-2025 www.microsip.org. Licenca GNU GPL v3; codigo-fonte em github.com/Joao-Mondardo-Upp/Upphone_SIP."
             VALUE "FileDescription", _GLOBAL_NAME_NICE
             VALUE "FileVersion", _GLOBAL_VERSION
             VALUE "InternalName", "Upphone"

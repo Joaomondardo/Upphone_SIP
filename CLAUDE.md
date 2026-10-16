@@ -5,8 +5,53 @@ Softphone SIP para Windows da Upp Tecnologia, baseado no MicroSIP 3.22.16 (Lite,
 - Converse com o usuário em português do Brasil.
 - Este repositório fica dentro do pjproject (`<pjproject>\microsip`). Monte o ambiente com `build\setup.ps1` e compile com `build\build.ps1` (veja o README).
 - As versões das dependências estão fixas em `build\pins.ps1`. Não atualize sem pedido explícito e sem um teste completo.
-- As configurações do app são fixas no código (`AccountSettings::SettingsLoad` em `settings.cpp`) e a tela de configurações está desativada de propósito.
+- Os padrões gerais vêm de `AccountSettings::SettingsLoad` em `settings.cpp` e a tela geral original está desativada. Na branch `provisionamento`, o perfil remoto pode aplicar overrides e a conta provisionada usa `provisioning.dat`; contas manuais continuam usando o INI. Confirme a precedência antes de alterar a persistência.
 - Cores: use as macros `_GLOBAL_THEME_*` e `_GLOBAL_BRAND_ACCENT` (`define.h`, `Theme.h`), nunca RGB fixo, para funcionar nos temas claro e escuro.
 - Marque as alterações em relação ao MicroSIP com comentários `// Upphone: ...`.
-- Nunca faça commit de `*.ini`, `*.db` ou `Contacts.xml`: o `Upphone.ini` contém a senha do ramal.
+- Nunca faça commit de configurações locais `*.ini`, `*.db`, `Contacts.xml`, `provisioning.dat`, seus temporários ou logs: contêm dados de ramal/dispositivo. No backend, mantenha `.env` e bancos fora do Git; `alembic.ini` é configuração do projeto, sem credencial real, e deve ser versionado.
 - Para testar a interface, capture só a janela do próprio app (`PrintWindow`). Nunca capture a tela inteira nem mande mensagens para a janela em primeiro plano.
+
+## Contexto da conversa de 15/10/2026
+
+### Atualização: implementação da branch provisionamento
+
+- `const.h` identifica **1.4.0 em desenvolvimento**; os registros de 1.3.1 abaixo descrevem a análise original. Foram adicionados `Provisioning/`, `ActivationDlg`, `MyAccountDlg`, `AudioDlg` e integração com configurações/status do app. Leia [docs/PROVISIONAMENTO.md](docs/PROVISIONAMENTO.md) antes de continuar.
+- O backend irmão `upp-provisionamento` é um repositório separado. Na orientação final, o usuário autorizou usar a conta **Joaomondardo**: criar **Joaomondardo/upp-provisionamento privado** e publicar as alterações do aplicativo na branch `provisionamento` do fork **Joaomondardo/Upphone_SIP**. Manter `origin` apontando ao projeto original e usar o remoto `joaomondardo` para o fork. Commit/push de fontes não equivalem a publicar release nem implantar serviço.
+- O backend oferece API e CLI, migração inicial e testes; o painel `app.panel` ainda não está presente e `/painel/` retorna 404. A integração SyssVoIP, monitoramento de filas e telefonia real continuam exigindo evidência da central e do `.exe` distribuído.
+- O instalador existente não implementa `/SERVIDOR` nem geração de `ativacao.ini`, apesar das leituras preparadas no cliente. Os domínios de provisionamento no fonte não comprovam implantação. Aviso/oferta de versão também não comprova atualização automática homologada.
+- Rodar o backend conforme seu README, com chaves locais geradas por `python -m app.cli init-env`. Os testes PostgreSQL com `UPP_TEST_DATABASE_URL` **apagam o schema `public`**; usar somente banco descartável. A suíte SQLite padrão usa arquivos temporários.
+- A especificação Markdown e o DOCX foram preservados como levantamento histórico e escopo pretendido. Não afirmar que todas as fases estão implementadas ou homologadas; manter relatos de compilação/testes separados dos testes reais de chamadas, áudio e filas.
+- Verificações da revisão: build Release Win32/x64 aprovado em cópia isolada (MSVC v145, SDK 10.0.26100.0 e dependências fixadas); 67 testes do backend em SQLite e ciclo Alembic upgrade/downgrade/upgrade aprovados. O `.exe` não foi executado nessa validação; PostgreSQL, chamadas e SyssVoIP não foram homologados por esses testes.
+
+### Objetivo e documentos entregues
+
+- O objetivo da UPP é simplificar instalação e ativação, evitando preenchimento manual dos parâmetros SIP, e centralizar clientes, usuários, ramais, dispositivos, configurações, versões e diagnóstico. A central/PBX continua responsável pela telefonia e pela distribuição das chamadas.
+- Foi criada a [especificação completa](docs/ESPECIFICACAO_SOFTPHONE_UPP.md), documento **UPP-SIP-ESP-001, versão 1.0**, com requisitos, entregáveis, critérios de aceite, matriz de testes e licenciamento. Consulte-a antes de implementar provisionamento ou gestão remota; ela descreve o escopo proposto, não comprova funcionalidades concluídas.
+- A pedido do usuário, também foi entregue uma [versão Word para baixar e compartilhar](docs/ESPECIFICACAO_SOFTPHONE_UPP.docx), com conteúdo completo, tabelas, sumário navegável e diagrama. Ao revisar a especificação para nova entrega, mantenha o DOCX correspondente ao Markdown.
+- Na criação desses documentos, o usuário pediu expressamente **não alterar o código**. Nessa atividade não houve compilação, geração de novo `.exe` ou homologação de telefonia. Essa restrição se referia à elaboração da especificação; não deve ser confundida com proibição permanente de implementar mudanças que o usuário venha a solicitar.
+- A estratégia proposta é: provisionamento; instalador/ativação; gestão remota; ajustes de interface com benefício real. Reaproveitar a identidade UPP e o instalador já existentes. Inventário dos clientes e revisão de licenças são pré-requisitos do planejamento; prazos, orçamento e SLAs não foram fechados.
+
+### Estado do workspace e cuidados de implementação
+
+- A base examinada do aplicativo é Upphone **1.3.1**, derivada do MicroSIP Lite **3.22.16**. Reconfirme versões e comportamento no código antes de usar esse registro como estado atual.
+- Existe agora uma pasta irmã [upp-provisionamento](../upp-provisionamento), com serviço Python/FastAPI, SQLAlchemy e configuração Alembic; a entrada está em [app/main.py](../upp-provisionamento/app/main.py). A observação inicial da especificação sobre ausência de backend descreve a árvore do aplicativo examinada naquele momento. Inspecione o projeto irmão antes de criar outra implementação; sua existência não comprova integração ou homologação com o softphone/PBX.
+- O aviso de nova versão do app consulta releases UPP e abre a página de download. Ele não equivale a atualização automática, distribuição por grupos ou rollback homologado.
+- Um gerador de INI sozinho não controla todos os parâmetros: `SettingsLoad` reaplica valores fixos e `AccountDlg.cpp` pode sobrescrever usuário/auth ID, domínio/proxy e transporte ao salvar. Testar persistência após reinício e edição da conta, inclusive quando esses campos tiverem valores diferentes.
+- Provisionamento externo precisa coordenar gravação e recarga com o aplicativo, sem disputar com `SettingsSave` ou interromper chamadas. Confirmar a revisão efetivamente carregada; salvar o INI não comprova aplicação nem registro SIP.
+- A senha é protegida com DPAPI no contexto do usuário Windows. Não distribuir um INI cifrado em outra máquina/usuário como solução de ativação; proteger o segredo no usuário destinatário, não no perfil do técnico instalador. Há fallback legado em `IniEncrypt` na base examinada; a especificação exige falha segura como evolução, não como garantia já implementada.
+- O perfil atual força UDP ao salvar a conta; o build desativa SSL sockets/DTLS e não entrega TLS/SRTP habilitados. G.711 A-law, G.711 u-law e G.729 estão configurados, mas disponibilidade no código não comprova negociação e áudio reais. Chamada única também afeta transferência assistida.
+- Bloquear token/API UPP não invalida automaticamente a senha SIP já entregue. Revogação de chamadas exige ação comprovada no PBX; senha compartilhada entre dispositivos pode impedir bloqueio seletivo. Não colocar senhas/tokens em URLs, logs, fontes ou pacotes públicos.
+
+### SyssVoIP e homologação de filas
+
+- A central indicada pelo usuário é a **SyssVoIP / PBX Unificado**: [site](https://www.syssvoip.com.br/) e [dashboard](https://www.syssvoip.com.br/pbx-unificado/dashboard). Na consulta desta conversa, a apresentação pública anunciava monitoramento de ramais/filas/troncos e API/webhooks; o painel operacional autenticado não foi validado. Não presumir versão implantada, módulos contratados, documentação de API, AMI/ARI ou tecnologia interna da central.
+- O usuário exige testar o **`.exe` efetivamente distribuído** nas diferentes realidades dos clientes, incluindo determinar **se há ou não monitoramento pela central**. Registrar versão, arquitetura, hash, configuração, Windows, rede, headset e PBX; usar chamadas reais e evidências da central. A especificação contém os casos T01–T20 e FQ01–FQ12.
+- Separar cinco capacidades no laudo: receber chamadas de fila; controlar o agente; ser monitorado pela central; apresentar indicadores no painel UPP; supervisão de áudio, se contratada. Concluir **suportado, não suportado ou não confirmado**, com evidências e limites. Recurso contratado sem aprovação impede liberar o perfil correspondente.
+- Registro SIP, presença/BLF, heartbeat, DND e autoatendimento não comprovam estado de agente ou monitoramento de filas. Não foi evidenciado monitor nativo de filas no app na análise inicial. Confirmar regras de login/logout, pausa, pós-atendimento e reconexão no PBX; não presumir códigos de facilidade universais.
+
+### Distribuição comercial e pendências de licença
+
+- O modelo comercial proposto mantém o aplicativo derivado sob **GPLv3**, com fontes correspondentes e avisos, e serviços UPP contratados separadamente. Cobrar pelo software/serviços é compatível com a GPL; modificar a marca não transforma o conjunto em software proprietário. Consulte a seção 10 da especificação e suas fontes antes de definir condições comerciais.
+- A licença do backend depende de sua independência e dependências; comunicação por HTTP não resolve essa análise por si só. Uma licença alternativa de PJSIP ou bcg729 não autoriza automaticamente fechar o código derivado do MicroSIP.
+- Há pendências concretas a esclarecer: `lib/Markup.h/.cpp` exigem permissão para redistribuir fonte; `lib/MessageBoxX.h/.cpp` restringem sua redistribuição e há alteração UPP. Ambos estão no projeto de compilação. Localizar autorização compatível ou planejar substituição; não presumir autorização nem declarar violação conclusiva apenas pela leitura dos avisos.
+- Também foram identificados aviso GPLv2 em `res/main.rc2` divergente da declaração GPLv3 do conjunto, empacotamento sem textos de licença explícitos e necessidade de inventário/SBOM das dependências e recursos. Essas pendências foram documentadas, não corrigidas nesta conversa. Não atestar regularidade da distribuição sem encerrá-las.

@@ -2,10 +2,12 @@
 
 Softphone SIP para Windows da **Upp Tecnologia**, baseado no [MicroSIP](https://www.microsip.org/) 3.22.16 (edição Lite) e no [pjproject](https://github.com/pjsip/pjproject).
 
+**Branch `provisionamento`: versão 1.4.0 em desenvolvimento.** Inclui cliente de ativação/configuração remota e telas de conta/áudio; a base publicada documentada é a 1.3.1. Consulte [docs/PROVISIONAMENTO.md](docs/PROVISIONAMENTO.md) para configurar o ambiente, entender as partes pendentes e planejar a homologação. O destino autorizado desta branch é o fork [Joaomondardo/Upphone_SIP](https://github.com/Joaomondardo/Upphone_SIP). O backend fica na pasta irmã `upp-provisionamento`, com destino privado autorizado [Joaomondardo/upp-provisionamento](https://github.com/Joaomondardo/upp-provisionamento); painel, integração SyssVoIP e testes reais de filas ainda não estão homologados.
+
 - Tema claro/escuro que acompanha o Windows, com a identidade visual da Upphone
 - Interface em português (Brasil), com o langpack embutido no executável
 - Codecs G.711 A-law, G.711 u-law e G.729 (bcg729)
-- Configurações fixas no código (sem tela de configurações), veja `AccountSettings::SettingsLoad` em `settings.cpp`
+- Parâmetros padrão no código, com aplicação de perfil remoto quando provisionado; configurações técnicas gerais continuam sem a tela original
 - Aviso de versão nova: uma vez por dia o app consulta a última release deste repositório no GitHub e oferece abrir a página de download (menu "Verificar por atualizações" para consultar na hora)
 - Sons próprios embutidos no `.exe` (toque de chamada, chamando, segunda chamada durante outra e fim de chamada), gerados por `build/gerar_sons.py`; um `.wav` com o mesmo nome ao lado do `Upphone.exe` substitui o padrão
 - Ligar ao clicar em links `tel:`, `sip:` e `callto:` (o Upphone se registra para eles ao abrir e aparece em Configurações > Aplicativos padrão)
@@ -14,6 +16,8 @@ Softphone SIP para Windows da **Upp Tecnologia**, baseado no [MicroSIP](https://
 - Senha do ramal protegida pelo Windows (DPAPI): só o mesmo usuário no mesmo computador consegue lê-la
 
 Histórico do projeto, decisões e pendências: [docs/HISTORICO.md](docs/HISTORICO.md).
+
+Escopo e critérios de aceite: [especificação Markdown](docs/ESPECIFICACAO_SOFTPHONE_UPP.md) e [versão Word](docs/ESPECIFICACAO_SOFTPHONE_UPP.docx). Os documentos descrevem a base examinada 1.3.1 e o produto proposto; não são um atestado de conclusão da 1.4.0.
 
 ## Estrutura
 

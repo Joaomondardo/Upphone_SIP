@@ -36,6 +36,10 @@
 #include "CMask.h"
 #include "Domain/Contact.h"
 #include "UpdateDlg.h"
+#include "ActivationDlg.h"
+#include "MyAccountDlg.h"
+#include "AudioDlg.h"
+#include "Provisioning/Provisioning.h"
 
 #include <winuser.h>
 #include <windows.h>
@@ -162,6 +166,7 @@ LRESULT CmainDlg::onRegState2(WPARAM wParam, LPARAM lParam)
     }
 
     UpdateWindowText(headerError, IDI_DEFAULT, true);
+    provisioning.OnRegistrationChanged(); // Upphone: the Upp platform learns the new state soon
 
     return 0;
 }
@@ -1835,6 +1840,12 @@ BEGIN_MESSAGE_MAP(CmainDlg, CBaseDialog)
     ON_COMMAND_RANGE(ID_CUSTOM_RANGE, ID_CUSTOM_RANGE + 99, OnMenuCustomRange)
     ON_COMMAND(ID_UPDATES, OnCheckUpdates)
     ON_MESSAGE(UM_UPDATE_CHECKER_LOADED, OnUpdateCheckerLoaded)
+    ON_COMMAND(ID_ACTIVATE, OnMenuActivate)
+    ON_COMMAND(ID_MY_ACCOUNT, OnMenuMyAccount)
+    ON_COMMAND(ID_AUDIO_SETTINGS, OnMenuAudio)
+    ON_MESSAGE(UM_PROVISIONING_RESULT, OnProvisioningResult)
+    ON_MESSAGE(UM_PROVISIONING_DEPROVISIONED, OnProvisioningDeprovisioned)
+    ON_MESSAGE(UM_PROVISIONING_UPDATE, OnProvisioningUpdate)
     ON_COMMAND(ID_SETTINGS, OnMenuSettings)
     ON_COMMAND(ID_SHORTCUTS, OnMenuShortcuts)
     ON_COMMAND(ID_ALWAYS_ON_TOP, OnMenuAlwaysOnTop)
@@ -2273,12 +2284,14 @@ LRESULT CmainDlg::OnCreated(WPARAM wParam, LPARAM lParam)
     }
 
     PJCreate();
+    provisioning.Start(m_hWnd); // Upphone
 
     if (lstrlen(theApp.m_lpCmdLine)) {
         CommandLine(theApp.m_lpCmdLine);
         theApp.m_lpCmdLine = NULL;
     }
     PJAccountAdd();
+    ShowActivationIfNeeded(); // Upphone
     //--
     WM_SHELLHOOKMESSAGE = RegisterWindowMessage(_T("SHELLHOOK"));
     if (WM_SHELLHOOKMESSAGE) {
@@ -2355,6 +2368,11 @@ void CmainDlg::SwitchDND(int state, bool update)
 
 void CmainDlg::OnMenuAccountAdd()
 {
+    // Upphone: a provisioned account is managed by the Upp platform, the account window would overwrite it
+    if (provisioning.IsProvisioned()) {
+        MyAccountDlg::Show(this);
+        return;
+    }
     if (!accountDlg) {
         accountDlg = new AccountDlg(this);
     }
@@ -2368,6 +2386,10 @@ void CmainDlg::OnMenuAccountAdd()
 
 void CmainDlg::OnMenuAccountEdit(UINT nID)
 {
+    if (provisioning.IsProvisioned()) { // Upphone (Ctrl+M too)
+        MyAccountDlg::Show(this);
+        return;
+    }
     if (!accountDlg) {
         accountDlg = new AccountDlg(this);
     }
@@ -2454,6 +2476,9 @@ void CmainDlg::OnMenuAlwaysOnTop()
 
 void CmainDlg::OnMenuExport()
 {
+    if (provisioning.IsProvisioned()) { // Upphone: the configuration belongs to the Upp platform
+        return;
+    }
     if (!exportDlg) {
         exportDlg = new ExportDlg(this);
     }
@@ -2464,6 +2489,9 @@ void CmainDlg::OnMenuExport()
 
 void CmainDlg::OnMenuImport()
 {
+    if (provisioning.IsProvisioned()) { // Upphone: the configuration belongs to the Upp platform
+        return;
+    }
     CString mask = _T("Ini Files (*.ini)|*.ini|");
     CFileDialog dlgFile(TRUE, _T("ini"), 0, OFN_NOCHANGEDIR | OFN_HIDEREADONLY, mask);
     if (dlgFile.DoModal() == IDOK) {
@@ -2606,8 +2634,18 @@ void CmainDlg::MainPopupMenu(bool isMenuButton)
     menu.CreatePopupMenu();
     CMenu* tracker = &menu;
     bool basic = false;
-    if (!basic) {
-
+    if (!basic && provisioning.IsProvisioned()) {
+        // Upphone: the account belongs to the Upp platform: "My Account" instead of the account items
+        tracker->AppendMenu(MF_STRING, ID_MY_ACCOUNT, Translate(_T("My Account...")));
+        tracker->AppendMenu(MF_STRING, ID_AUDIO_SETTINGS, Translate(_T("Audio...")));
+        tracker->AppendMenu(MF_SEPARATOR);
+        str = Translate(_T("Shortcuts"));
+        str.Append(_T("\tCtrl+S"));
+        tracker->AppendMenu(MF_STRING, ID_SHORTCUTS, str);
+    }
+    else if (!basic) {
+                // Upphone: activation with the code of the Upp platform
+                tracker->AppendMenu(MF_STRING, ID_ACTIVATE, Translate(_T("Activate with Code...")));
                 // -- add
                 tracker->AppendMenu(MF_STRING, ID_ACCOUNT_ADD, Translate(_T("Add Account...")));
                 //-- edit
@@ -2655,6 +2693,7 @@ void CmainDlg::MainPopupMenu(bool isMenuButton)
             str.Append(_T("\tCtrl+L"));
             tracker->AppendMenu(MF_STRING, ID_ACCOUNT_EDIT_LOCAL, str);
         }
+        tracker->AppendMenu(MF_STRING, ID_AUDIO_SETTINGS, Translate(_T("Audio..."))); // Upphone
 
         tracker->AppendMenu(MF_SEPARATOR);
         str = Translate(_T("Shortcuts"));
@@ -2674,9 +2713,12 @@ void CmainDlg::MainPopupMenu(bool isMenuButton)
     }
     CMenu importExportMenu;
     importExportMenu.CreatePopupMenu();
-    importExportMenu.AppendMenu(MF_STRING, ID_MENU_EXPORT, Translate(_T("Export Configuration")));
-    importExportMenu.AppendMenu(MF_STRING, ID_MENU_IMPORT, Translate(_T("Import Configuration")));
-    importExportMenu.AppendMenu(MF_SEPARATOR);
+    // Upphone: a provisioned configuration is not exported nor imported (it belongs to the Upp platform)
+    if (!provisioning.IsProvisioned()) {
+        importExportMenu.AppendMenu(MF_STRING, ID_MENU_EXPORT, Translate(_T("Export Configuration")));
+        importExportMenu.AppendMenu(MF_STRING, ID_MENU_IMPORT, Translate(_T("Import Configuration")));
+        importExportMenu.AppendMenu(MF_SEPARATOR);
+    }
     importExportMenu.AppendMenu(MF_STRING, ID_MENU_EXPORT_CALLS, Translate(_T("Export Call Log")));
     importExportMenu.AppendMenu(MF_STRING, ID_MENU_IMPORT_CALLS, Translate(_T("Import Call Log")));
     importExportMenu.AppendMenu(MF_SEPARATOR);
@@ -3006,6 +3048,18 @@ void CmainDlg::OnSessionChange(UINT nSessionState, UINT nId)
 
 LRESULT CmainDlg::OnAccount(WPARAM wParam, LPARAM lParam)
 {
+    // Upphone: a provisioned account is not edited here; a refused password is a matter for the Upp support,
+    // which already got the failure in the heartbeat
+    if (provisioning.IsProvisioned()) {
+        if (wParam) {
+            BaloonPopup(Translate(_T("Incorrect Password")), Translate(_T("The PBX refused the password of the extension. Upp was notified.")));
+        }
+        return 0;
+    }
+    if (!accountSettings.accountId || accountSettings.account.username.IsEmpty()) {
+        ShowActivationIfNeeded();
+        return 0;
+    }
     if (!accountDlg) {
         accountDlg = new AccountDlg(this);
     }
@@ -3090,6 +3144,7 @@ void CmainDlg::OnTimerCall()
     }
     else {
         KillTimer(IDT_TIMER_CALL);
+        provisioning.OnCallsEnded(); // Upphone: a configuration received during the call is applied now
     }
 }
 
@@ -3172,6 +3227,9 @@ void CmainDlg::OnTimer(UINT_PTR TimerVal)
     }
     else if (TimerVal == IDT_TIMER_UPDATES) {
         CheckUpdatesIfDue(); // Upphone
+    }
+    else if (TimerVal == IDT_TIMER_PROVISIONING) {
+        provisioning.OnTimer(); // Upphone: heartbeat
     }
     else if (TimerVal == IDT_TIMER_DIRECTORY) {
         UsersDirectoryLoad(true);
@@ -3741,6 +3799,9 @@ void CmainDlg::PJDestroy(bool exit)
     if (!is_pjsua_running()) {
         return;
     }
+    // Upphone: the audio test owns ports and a pool of this stack. A remote STUN change or logout may
+    // restart it while the modeless Audio window is open; release those resources before pjsua_destroy.
+    AudioDlg::CloseIfOpen();
     statistics.pjDestroyTime = CTime::GetCurrentTime().GetTime();
     statistics.pjDestroyThreadId = GetCurrentThreadId();
 
@@ -3935,6 +3996,11 @@ void CmainDlg::PJAccountAdd()
     }
     CString str;
 
+    // Upphone: provisioned, but blocked by the Upp platform or without a configuration this app can use
+    if (provisioning.IsProvisioned() && (provisioning.IsServiceBlocked() || !provisioning.HasUsableConfig())) {
+        UpdateWindowText();
+        return;
+    }
     if (!accountSettings.accountId) {
         return;
     }
@@ -4248,6 +4314,13 @@ void CmainDlg::UpdateWindowText(CString text, int icon, bool afterRegister)
         icon = IDI_OFFLINE;
     }
 #endif
+    // Upphone: the use of the extension suspended by the Upp platform (blocked computer, disabled extension...)
+    if (provisioning.IsServiceBlocked() && (text.IsEmpty() || text == _T("-"))
+        && !(is_pjsua_running() && pjsua_acc_is_valid(account))) {
+        str = Translate(_T("Blocked"));
+        icon = IDI_OFFLINE;
+        showAccountDlg = false;
+    }
 
     if (icon != -1 && m_bar.m_warning != (icon == IDI_ON_HOLD)) {
         m_bar.m_warning = icon == IDI_ON_HOLD; // Upphone: hold in the warning color
@@ -4371,6 +4444,20 @@ bool CmainDlg::CommandLine(CString params) {
     params.Trim();
     if (params.GetAt(0) == '"' && params.GetAt(params.GetLength() - 1) == '"') {
         params = params.Mid(1, params.GetLength() - 2);
+    }
+    // Upphone: Upphone.exe /ativar:XXXX-XXXX-XXXX-XXXX (also /activate:) opens the activation with the code
+    CString lower = params;
+    lower.MakeLower();
+    if (lower.Find(_T("/ativar:")) == 0 || lower.Find(_T("/activate:")) == 0) {
+        CString code = params.Mid(params.Find(_T(':')) + 1);
+        code.Trim();
+        if (provisioning.IsProvisioned()) {
+            MyAccountDlg::Show(this);
+        }
+        else {
+            ActivationDlg::Show(this, _T(""), code, true);
+        }
+        return true;
     }
     if (!params.IsEmpty()) {
         if (params.Find(_T("msip:")) == 0) {
@@ -4950,6 +5037,18 @@ static CString EmbeddedSoundFile(const CString& name)
     return _T("");
 }
 
+CString CmainDlg::SoundPath(const CString& name)
+{
+    CString file = accountSettings.pathExe + _T("\\") + name;
+    if (!::PathFileExists(file)) {
+        CString embedded = EmbeddedSoundFile(name);
+        if (!embedded.IsEmpty()) {
+            file = embedded;
+        }
+    }
+    return file;
+}
+
 LRESULT CmainDlg::onPlayerPlay(WPARAM wParam, LPARAM lParam)
 {
     CString filename;
@@ -5366,6 +5465,7 @@ void CmainDlg::OnClose()
     statistics.closeTime = CTime::GetCurrentTime().GetTime();
     g_bClosingApp = true;
 
+    provisioning.Shutdown(); // Upphone
     PJDestroy(true);
 
     accountSettings.SettingsSave();
@@ -5983,6 +6083,16 @@ void CmainDlg::OnCheckUpdates()
 // would replace this build with stock MicroSIP). The certificate is validated and the page opened is fixed.
 void CmainDlg::CheckUpdates()
 {
+    // Upphone: a provisioned computer follows the version chosen by the Upp platform (channel of the client,
+    // pinned version, minimum version), received in the heartbeat; GitHub only for the other installations
+    if (provisioning.IsProvisioned()) {
+        bool manual = updateCheckerShow;
+        updateCheckerShow = false;
+        accountSettings.checkUpdatesTime = (int)CTime::GetCurrentTime().GetTime();
+        accountSettings.GlobalSave();
+        ShowProvisionedUpdate(manual);
+        return;
+    }
     URLGetAsync(_T(_GLOBAL_UPDATES_API), m_hWnd, UM_UPDATE_CHECKER_LOADED, 0, _T(""),
         _T("Accept: application/vnd.github+json\r\nUser-Agent: Upphone-SIP\r\n"), _T(""), _T(""), NULL, true);
 }
@@ -6142,6 +6252,107 @@ LRESULT CmainDlg::OnUpdateCheckerLoaded(WPARAM wParam, LPARAM lParam)
         }
     }
     return 0;
+}
+
+static CString OfferString(const Json::Value& offer, const char* key)
+{
+    if (offer.isObject() && offer.isMember(key) && offer[key].isString()) {
+        return MSIP::Utf8DecodeUni(offer[key].asString().c_str());
+    }
+    return CString();
+}
+
+// Upphone: version offered by the Upp platform to a provisioned computer. It may be lower than the installed one
+// when the Upp pinned a version for the client (controlled rollback); below the minimum the notice always appears.
+void CmainDlg::ShowProvisionedUpdate(bool manual)
+{
+    const Json::Value& offer = provisioning.UpdateOffer();
+    CString latest = OfferString(offer, "latest_version");
+    CString minimum = OfferString(offer, "min_version");
+    bool pinned = offer.isObject() && offer.isMember("pinned") && offer["pinned"].isBool() && offer["pinned"].asBool();
+    int current[4];
+    int target[4];
+    int lowest[4];
+    UpdateParseVersion(_T(_GLOBAL_VERSION), current);
+    bool belowMinimum = !minimum.IsEmpty() && UpdateParseVersion(minimum, lowest) && UpdateCompareVersions(current, lowest) < 0;
+    bool offered = !latest.IsEmpty() && UpdateParseVersion(latest, target)
+        && (UpdateCompareVersions(target, current) > 0 || (pinned && UpdateCompareVersions(target, current) != 0));
+    if (offered) {
+        if (manual || belowMinimum || latest != accountSettings.updatesDeclined) {
+            if (!manual && !belowMinimum && messagesDlg->GetCallsCount()) {
+                accountSettings.checkUpdatesTime = 0; // asked again on the next hourly check
+                return;
+            }
+            UpdateDlg::Show(this, latest, OfferString(offer, "notes"), OfferString(offer, "download_url"),
+                OfferString(offer, "sha256"), belowMinimum);
+        }
+    }
+    else if (belowMinimum) {
+        BaloonPopup(Translate(_T("This version is outdated")), Translate(_T("Contact the Upp support to update the app.")));
+    }
+    else if (manual) {
+        ::MessageBox(m_hWnd, Translate(_T("You are using the version indicated by Upp.")), _T(_GLOBAL_NAME_VISIBLE), MB_ICONINFORMATION | MB_SETFOREGROUND);
+    }
+}
+
+LRESULT CmainDlg::OnProvisioningUpdate(WPARAM wParam, LPARAM lParam)
+{
+    ShowProvisionedUpdate(false);
+    return 0;
+}
+
+LRESULT CmainDlg::OnProvisioningResult(WPARAM wParam, LPARAM lParam)
+{
+    provisioning.OnResult((ProvJob*)lParam);
+    return 0;
+}
+
+LRESULT CmainDlg::OnProvisioningDeprovisioned(WPARAM wParam, LPARAM lParam)
+{
+    CString* message = (CString*)lParam;
+    MyAccountDlg::CloseIfOpen();
+    UpdateWindowText();
+    ActivationDlg::Show(this, message ? *message : CString());
+    delete message;
+    return 0;
+}
+
+void CmainDlg::OnMenuActivate()
+{
+    if (provisioning.IsProvisioned()) {
+        MyAccountDlg::Show(this);
+    }
+    else {
+        ActivationDlg::Show(this, _T(""), provisioning.PendingCode());
+    }
+}
+
+void CmainDlg::OnMenuMyAccount()
+{
+    MyAccountDlg::Show(this);
+}
+
+void CmainDlg::OnMenuAudio()
+{
+    AudioDlg::Show(this);
+}
+
+// Upphone: without an account (first use, or after leaving the account) the app asks for the activation code;
+// a code left by the installer, or of an activation interrupted before the answer, is used right away
+void CmainDlg::ShowActivationIfNeeded()
+{
+    if (provisioning.IsProvisioned() || accountDlg || ActivationDlg::IsOpen()) {
+        return;
+    }
+    if (accountSettings.accountId && !accountSettings.account.username.IsEmpty()) {
+        return; // manual account (installation without provisioning)
+    }
+    CString code = provisioning.PendingCode();
+    if (m_startMinimized && !IsWindowVisible() && code.IsEmpty()) {
+        BaloonPopup(_T(_GLOBAL_NAME_NICE), Translate(_T("Activate Upphone SIP with the code sent by Upp.")), NIIF_INFO);
+        return;
+    }
+    ActivationDlg::Show(this, _T(""), code, !code.IsEmpty());
 }
 
 #ifdef _GLOBAL_VIDEO

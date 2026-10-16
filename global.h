@@ -88,6 +88,13 @@ enum EUserWndMessages
     UM_QUERYTAB,
     UM_UPDATE_CHECKER_LOADED,
 
+    // Upphone: provisioning (Provisioning/Provisioning.h)
+    UM_PROVISIONING_RESULT,       // lParam: ProvJob* finished by the worker thread
+    UM_PROVISIONING_ACTIVATION,   // to the activation window: wParam 1 ok / 0 error, lParam CString* message
+    UM_PROVISIONING_DEPROVISIONED, // lParam CString* message: the account left this computer
+    UM_PROVISIONING_UPDATE,       // a version of the app offered by the Upp platform
+    IDT_TIMER_PROVISIONING,
+    IDT_TIMER_AUDIO_LEVEL,
 };
 
 enum {

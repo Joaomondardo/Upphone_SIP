@@ -661,3 +661,125 @@ Chamada em espera
 Chamada em espera
 [Call is Active]
 Chamada ativa
+[Manual setup (technicians)]
+Configuração manual (técnicos)
+[Activation]
+Ativação
+[Activate Upphone SIP]
+Ativar o Upphone SIP
+[Type the activation code sent by Upp. It is valid for a short time and can be used only once.]
+Digite o código de ativação enviado pela Upp. Ele vale por pouco tempo e só pode ser usado uma vez.
+[Activation code]
+Código de ativação
+[Activate]
+Ativar
+[Activating... this takes a few seconds.]
+Ativando... isso leva alguns segundos.
+[Done]
+Concluir
+[My Account]
+Minha conta
+[My Account...]
+Minha conta...
+[Activate with Code...]
+Ativar com código...
+[Audio]
+Áudio
+[Audio...]
+Áudio...
+[Windows default]
+Padrão do Windows
+[not found, using the Windows default]
+não encontrado, usando o padrão do Windows
+[environment]
+ambiente
+[SIP user]
+usuário SIP
+[Extension]
+Ramal
+[activated on]
+ativado em
+[This computer]
+Este computador
+[Connection with Upp]
+Conexão com a Upp
+[Starting...]
+Iniciando...
+[Disconnected: the use of the extension is suspended.]
+Desconectado: o uso do ramal está suspenso.
+[No account registered.]
+Nenhuma conta registrada.
+[Registered in]
+Registrado em
+[the PBX refused the password]
+a central recusou a senha
+[extension not found in the PBX]
+ramal não encontrado na central
+[the PBX did not answer]
+a central não respondeu
+[Failure]
+Falha
+[Registration in the PBX]
+Registro na central
+[Configuration]
+Configuração
+[Loudspeaker]
+Alto-falante
+[Upp support]
+Suporte Upp
+[Looking for the configuration...]
+Buscando a configuração...
+[This computer stops using the extension %s. To use it again, a new activation code from Upp is needed.]
+Este computador deixa de usar o ramal %s. Para usar de novo, é preciso um novo código de ativação da Upp.
+[Sign out?]
+Sair da conta?
+[Sign out]
+Sair da conta
+[Test call]
+Chamada de teste
+[Send diagnostics]
+Enviar diagnóstico
+[Reload settings]
+Recarregar configuração
+[Close]
+Fechar
+[Choose the microphone and the speaker used in calls. Speak to see the level of the microphone.]
+Escolha o microfone e o alto-falante usados nas chamadas. Fale para ver o nível do microfone.
+[During a call the tests are disabled; the choice is used in the next call.]
+Durante uma chamada os testes ficam desativados; a escolha vale a partir da próxima chamada.
+[A device chosen before was not found; the Windows default is selected.]
+Um dispositivo escolhido antes não foi encontrado; o padrão do Windows foi selecionado.
+[Could not open the chosen microphone or speaker.]
+Não foi possível abrir o microfone ou o alto-falante escolhido.
+[Record and play]
+Gravar e ouvir
+[Playing the recording in the speaker...]
+Tocando a gravação no alto-falante...
+[Playing a sound in the speaker...]
+Tocando um som no alto-falante...
+[Playing the ringtone...]
+Tocando o toque de chamada...
+[Could not record from the microphone.]
+Não foi possível gravar do microfone.
+[Stop]
+Parar
+[Recording 5 seconds: say something...]
+Gravando 5 segundos: fale alguma coisa...
+[Test speaker]
+Testar alto-falante
+[Test ringtone]
+Testar toque
+[The PBX refused the password of the extension. Upp was notified.]
+A central recusou a senha do ramal. A Upp foi avisada.
+[Blocked]
+Bloqueado
+[Contact the Upp support to update the app.]
+Fale com o suporte da Upp para atualizar o app.
+[You are using the version indicated by Upp.]
+Você já está usando a versão indicada pela Upp.
+[Activate Upphone SIP with the code sent by Upp.]
+Ative o Upphone SIP com o código enviado pela Upp.
+[Update Required]
+Atualização necessária
+[Installer check code (SHA-256):]
+Código de verificação do instalador (SHA-256):

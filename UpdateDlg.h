@@ -28,14 +28,19 @@ class UpdateDlg : public CThemeDialog
 {
 public:
 	enum { IDD = IDD_UPDATE };
-	// opens the notice, or brings the one already open to the front
-	static void Show(CWnd* pParent, CString version, CString notes);
+	// opens the notice, or brings the one already open to the front. url: download page offered by the Upp
+	// platform (https only; empty = the release page of GitHub); sha256: hash of the installer, shown to check
+	// the download; mandatory: the installed version is below the minimum accepted, "No" is not remembered
+	static void Show(CWnd* pParent, CString version, CString notes, CString url = _T(""), CString sha256 = _T(""), bool mandatory = false);
 
 protected:
-	UpdateDlg(CString version, CString notes);
+	UpdateDlg(CString version, CString notes, CString url, CString sha256, bool mandatory);
 	static UpdateDlg* s_open;
 	CString m_version;
 	CString m_notes;
+	CString m_url;
+	CString m_sha256;
+	bool m_mandatory = false;
 	CFont m_fontTitle;
 	CFont m_fontQuestion;
 	HICON m_hIcon = NULL;

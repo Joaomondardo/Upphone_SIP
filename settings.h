@@ -181,6 +181,7 @@ struct AccountSettings {
 	void SettingsLoad(CString filename = _T(""));
 	void SettingsSave(CString filename = _T(""));
     void GlobalSave(CString filename = _T(""));
+	void ResetProvisionedFields(); // Upphone
 };
 
 extern Statistics statistics;

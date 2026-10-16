@@ -286,6 +286,17 @@ public:
     afx_msg void CheckUpdates();
     void CheckUpdatesIfDue(); // Upphone
     afx_msg LRESULT OnUpdateCheckerLoaded(WPARAM wParam, LPARAM lParam);
+    // Upphone: provisioning by the Upp platform (Provisioning/Provisioning.h)
+    afx_msg void OnMenuActivate();
+    afx_msg void OnMenuMyAccount();
+    afx_msg void OnMenuAudio();
+    afx_msg LRESULT OnProvisioningResult(WPARAM wParam, LPARAM lParam);
+    afx_msg LRESULT OnProvisioningDeprovisioned(WPARAM wParam, LPARAM lParam);
+    afx_msg LRESULT OnProvisioningUpdate(WPARAM wParam, LPARAM lParam);
+    void ShowActivationIfNeeded();
+    void ShowProvisionedUpdate(bool manual);
+    // Upphone: a sound of the app: a .wav next to Upphone.exe, or the embedded one
+    CString SoundPath(const CString& name);
 #ifdef _GLOBAL_VIDEO
     afx_msg void createPreviewWin();
 #endif

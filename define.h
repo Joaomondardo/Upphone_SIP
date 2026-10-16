@@ -74,6 +74,11 @@
 // The app reads the version from the API and always opens the fixed release page, never a link from the response.
 #define _GLOBAL_UPDATES_API "https://api.github.com/repos/Joao-Mondardo-Upp/Upphone_SIP/releases/latest"
 #define _GLOBAL_UPDATES_PAGE "https://github.com/Joao-Mondardo-Upp/Upphone_SIP/releases/latest"
+// Upphone: provisioning servers of the Upp platform, chosen by the first letter of the activation code
+// (P production, H homologation). Development (D) needs the address in the installer (/SERVIDOR=) or in
+// Upphone.ini, [Provisioning] server=. See docs/PROVISIONAMENTO.md.
+#define _GLOBAL_PROVISIONING_PROD "https://provisionamento.upphone.com.br"
+#define _GLOBAL_PROVISIONING_HOMOLOG "https://homolog.provisionamento.upphone.com.br"
 #define _GLOBAL_TECH_DETAILS
 
 #define _GLOBAL_EC_DEFAULT "1"

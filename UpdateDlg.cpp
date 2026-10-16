@@ -26,14 +26,14 @@
 
 UpdateDlg* UpdateDlg::s_open = NULL;
 
-void UpdateDlg::Show(CWnd* pParent, CString version, CString notes)
+void UpdateDlg::Show(CWnd* pParent, CString version, CString notes, CString url, CString sha256, bool mandatory)
 {
     if (s_open) {
         s_open->ShowWindow(SW_SHOWNORMAL);
         s_open->SetForegroundWindow();
         return;
     }
-    UpdateDlg* dlg = new UpdateDlg(version, notes);
+    UpdateDlg* dlg = new UpdateDlg(version, notes, url, sha256, mandatory);
     if (!dlg->Create(IDD, pParent)) {
         delete dlg;
         return;
@@ -46,9 +46,13 @@ void UpdateDlg::Show(CWnd* pParent, CString version, CString notes)
     dlg->SetForegroundWindow();
 }
 
-UpdateDlg::UpdateDlg(CString version, CString notes)
-    : CThemeDialog(UpdateDlg::IDD, NULL), m_version(version), m_notes(notes)
+UpdateDlg::UpdateDlg(CString version, CString notes, CString url, CString sha256, bool mandatory)
+    : CThemeDialog(UpdateDlg::IDD, NULL), m_version(version), m_notes(notes), m_url(url), m_sha256(sha256), m_mandatory(mandatory)
 {
+    // Upphone: only an https page offered by the Upp platform, otherwise the fixed release page
+    if (m_url.Left(8).CompareNoCase(_T("https://")) != 0) {
+        m_url = _T(_GLOBAL_UPDATES_PAGE);
+    }
 }
 
 void UpdateDlg::DoDataExchange(CDataExchange* pDX)
@@ -89,13 +93,20 @@ BOOL UpdateDlg::OnInitDialog()
     icon->SetWindowPos(NULL, 0, 0, iconSize, iconSize, SWP_NOMOVE | SWP_NOZORDER);
     icon->SetIcon(m_hIcon);
 
-    GetDlgItem(IDC_UPDATE_TITLE)->SetWindowText(Translate(_T("Update Available")));
+    GetDlgItem(IDC_UPDATE_TITLE)->SetWindowText(Translate(m_mandatory ? _T("Update Required") : _T("Update Available")));
     CString text;
     text.Format(Translate(_T("Version %s is available. You are using version %s.")), m_version.GetString(), _T(_GLOBAL_VERSION));
     GetDlgItem(IDC_UPDATE_TEXT)->SetWindowText(text);
-    if (!m_notes.IsEmpty()) {
+    if (!m_notes.IsEmpty() || !m_sha256.IsEmpty()) {
         CString notes;
-        notes.Format(_T("%s\r\n%s"), Translate(_T("What's new:")), m_notes.GetString());
+        if (!m_notes.IsEmpty()) {
+            notes.Format(_T("%s\r\n%s"), Translate(_T("What's new:")), m_notes.Left(1500).GetString());
+        }
+        if (!m_sha256.IsEmpty()) {
+            // Upphone: to check the downloaded installer (Get-FileHash in PowerShell)
+            notes.AppendFormat(_T("%s%s\r\n%s"), notes.IsEmpty() ? _T("") : _T("\r\n\r\n"),
+                Translate(_T("Installer check code (SHA-256):")), m_sha256.GetString());
+        }
         CEdit* edit = (CEdit*)GetDlgItem(IDC_UPDATE_NOTES);
         edit->SetWindowText(notes);
         // some room between the box border and the text
@@ -143,15 +154,18 @@ void UpdateDlg::OnOK()
 {
     accountSettings.updatesDeclined.Empty();
     accountSettings.GlobalSave();
-    MSIP::OpenURL(_T(_GLOBAL_UPDATES_PAGE));
+    MSIP::OpenURL(m_url);
     DestroyWindow();
 }
 
 void UpdateDlg::OnCancel()
 {
-    // "No" (or closing the notice): this version is offered again only by "Check for Updates"
-    accountSettings.updatesDeclined = m_version;
-    accountSettings.GlobalSave();
+    // "No" (or closing the notice): this version is offered again only by "Check for Updates"; a version below
+    // the minimum is always offered again
+    if (!m_mandatory) {
+        accountSettings.updatesDeclined = m_version;
+        accountSettings.GlobalSave();
+    }
     DestroyWindow();
 }
 

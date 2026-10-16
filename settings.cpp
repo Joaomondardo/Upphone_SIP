@@ -19,6 +19,7 @@
 #include "stdafx.h"
 #include "settings.h"
 #include "Crypto.h"
+#include "Provisioning/Provisioning.h"
 
 #include <algorithm>
 #include <vector>
@@ -43,7 +44,8 @@ static LONGLONG FileSize(const wchar_t* name)
 
 // Upphone: the account password is protected with DPAPI, so only the same Windows user on the
 // same computer can read it. The MicroSIP format used _GLOBAL_KEY, which is public in this
-// repository; it is still read so existing Upphone.ini files are converted on the next start.
+// repository; it is still read so existing Upphone.ini files are converted on the next start,
+// but never written again.
 #pragma comment(lib, "crypt32.lib")
 static const TCHAR kIniDpapiPrefix[] = _T("dpapi:");
 
@@ -63,23 +65,6 @@ static bool IniDecryptLegacy(CString& str)
         catch (CArchiveException* e) {
             e->Delete();
         }
-    }
-    return res;
-}
-
-static CString IniEncryptLegacy(CString str)
-{
-    CString res;
-    MFC::CCrypto crypto;
-    CByteArray arPassword;
-    CString key = (LPCTSTR)_GLOBAL_KEY;
-    if (!str.IsEmpty() && crypto.DeriveKey(key)
-        && crypto.Encrypt(str, arPassword)
-        ) {
-        res = MSIP::Bin2String(&arPassword);
-    }
-    else {
-        res = str;
     }
     return res;
 }
@@ -120,7 +105,9 @@ CString IniEncrypt(CString str)
     BOOL ok = CryptProtectData(&in, _T(_GLOBAL_NAME_NICE), NULL, NULL, NULL, CRYPTPROTECT_UI_FORBIDDEN, &out);
     str.ReleaseBuffer();
     if (!ok) {
-        return IniEncryptLegacy(str);
+        // Upphone: without DPAPI the password is not stored (it has to be typed again); the old format with
+        // the public key of the repository would only look protected
+        return _T("");
     }
     CByteArray blob;
     blob.SetSize(out.cbData);
@@ -358,6 +345,8 @@ void AccountSettings::Init()
         }
     }
     AccountLoad(0, &accountLocal);
+    // Upphone: the account and the settings provisioned by the Upp platform (provisioning.dat)
+    provisioning.Init();
 }
 
 AccountSettings::AccountSettings()
@@ -608,12 +597,18 @@ void AccountSettings::SettingsLoad(CString filename)
     singleMode = true;
     ringtone.Empty();
     volumeRing = 100;
-    audioRingDevice.Empty();
-    audioOutputDevice.Empty();
-    audioInputDevice.Empty();
+    // Upphone: the microphone, speaker and ringing devices are a choice of the user (Audio window)
+    ptr = audioRingDevice.GetBuffer(256);
+    GetPrivateProfileString(section, _T("audioRingDevice"), NULL, ptr, 256, filename);
+    audioRingDevice.ReleaseBuffer();
+    ptr = audioOutputDevice.GetBuffer(256);
+    GetPrivateProfileString(section, _T("audioOutputDevice"), NULL, ptr, 256, filename);
+    audioOutputDevice.ReleaseBuffer();
+    ptr = audioInputDevice.GetBuffer(256);
+    GetPrivateProfileString(section, _T("audioInputDevice"), NULL, ptr, 256, filename);
+    audioInputDevice.ReleaseBuffer();
     micAmplification = false;
     swLevelAdjustment = false;
-    audioCodecs = _T("PCMA/8000/1 PCMU/8000/1 G729/8000/1");
     vad = false;
     ec = false;
     forceCodec = false;
@@ -639,8 +634,6 @@ void AccountSettings::SettingsLoad(CString filename)
     rtpPortMax = 0;
     dnsSrvNs.Empty();
     dnsSrv = false;
-    stun.Empty();
-    enableSTUN = false;
 
     // Gravacao de chamadas
     if (isPortable) {
@@ -663,7 +656,6 @@ void AccountSettings::SettingsLoad(CString filename)
     buttonCONF = true;
 
     // Chamadas
-    DTMFMethod = 2; // RFC2833
     autoAnswer = _T("button");
     autoAnswerDelay = 0;
     autoAnswerNumber.Empty();
@@ -673,10 +665,8 @@ void AccountSettings::SettingsLoad(CString filename)
     forwardingDelay = 0;
     featureCodeCP = _T("**");
     featureCodeBT = _T("##");
-    featureCodeAT = _T("*2");
     enableFeatureCodeCP = true;
     enableFeatureCodeBT = false;
-    enableFeatureCodeAT = false;
     denyIncoming = _T("button");
 
     // Diretorio de usuarios continua configuravel apenas via .ini
@@ -688,7 +678,6 @@ void AccountSettings::SettingsLoad(CString filename)
     enableMediaButtons = false;
     headsetSupport = false;
     localDTMF = true;
-    enableLog = false;
     bringToFrontOnIncoming = true;
     enableLocalAccount = false;
     randomAnswerBox = false;
@@ -923,6 +912,23 @@ void AccountSettings::SettingsLoad(CString filename)
     GetPrivateProfileString(section, _T("lastCallHasVideo"), NULL, ptr, 256, filename);
     str.ReleaseBuffer();
     lastCallHasVideo = (str == _T("1"));
+
+    ResetProvisionedFields();
+    // Upphone: the values of these fields set by the Upp platform for a provisioned account
+    provisioning.ApplySettingsOverrides(this);
+}
+
+// Upphone: fixed values of the settings that the Upp platform may change for a provisioned account
+// (Provisioning::ApplySettingsOverrides); used again when the user leaves the account.
+void AccountSettings::ResetProvisionedFields()
+{
+    audioCodecs = _T("PCMA/8000/1 PCMU/8000/1 G729/8000/1");
+    DTMFMethod = 2; // RFC2833
+    stun.Empty();
+    enableSTUN = false;
+    featureCodeAT = _T("*2");
+    enableFeatureCodeAT = false;
+    enableLog = false;
 }
 
 void AccountSettings::SettingsSave(CString filename)

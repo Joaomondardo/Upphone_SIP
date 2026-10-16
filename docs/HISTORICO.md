@@ -1,6 +1,6 @@
 # Upphone SIP: histórico e passagem do projeto
 
-Documento para continuar o trabalho em outra máquina. Resume o que foi feito no desenvolvimento das versões 1.0.0 a 1.3.1 (outubro de 2026), por que cada decisão foi tomada e o que está pendente.
+Documento para continuar o trabalho em outra máquina. Resume as versões publicadas 1.0.0 a 1.3.1 e o desenvolvimento da 1.4.0 (outubro de 2026), por que cada decisão foi tomada e o que está pendente.
 
 - Repositório: https://github.com/Joao-Mondardo-Upp/Upphone_SIP (público)
 - Releases publicadas: [v1.3.1](https://github.com/Joao-Mondardo-Upp/Upphone_SIP/releases/tag/v1.3.1) (atual), [v1.3.0](https://github.com/Joao-Mondardo-Upp/Upphone_SIP/releases/tag/v1.3.0), [v1.2.0](https://github.com/Joao-Mondardo-Upp/Upphone_SIP/releases/tag/v1.2.0), [v1.1.0](https://github.com/Joao-Mondardo-Upp/Upphone_SIP/releases/tag/v1.1.0) e [v1.0.0](https://github.com/Joao-Mondardo-Upp/Upphone_SIP/releases/tag/v1.0.0)
@@ -9,6 +9,18 @@ Documento para continuar o trabalho em outra máquina. Resume o que foi feito no
 ---
 
 ## 1. Estado atual
+
+### Branch `provisionamento`: 1.4.0 em desenvolvimento
+
+Em 15/10/2026, `const.h` passou a identificar a versão 1.4.0. A implementação adiciona módulo `Provisioning/`, ativação por código, telas de conta/áudio, perfil remoto e comunicação de estado do dispositivo. O backend Python/FastAPI está na pasta irmã `upp-provisionamento`, com API, CLI, migração inicial e testes; o usuário autorizou publicá-lo em repositório privado separado `Joaomondardo/upp-provisionamento` e usar o fork `Joaomondardo/Upphone_SIP` para a branch `provisionamento` do aplicativo. Consulte [PROVISIONAMENTO.md](PROVISIONAMENTO.md) para operação e limites atuais.
+
+O painel web ainda não está incluído no backend. A automação do instalador com `/SERVIDOR`/`ativacao.ini`, implantação dos servidores, integração SyssVoIP, testes de chamadas/áudio/codecs e monitoramento de filas permanecem pendentes de implementação e/ou homologação conforme cada item. A presença de heartbeat ou de código de integração não comprova resultado na telefonia.
+
+A especificação [Markdown](ESPECIFICACAO_SOFTPHONE_UPP.md) e [Word](ESPECIFICACAO_SOFTPHONE_UPP.docx) registra a base 1.3.1 examinada e o escopo desejado, ainda não atendido integralmente. Publicar a branch não publica uma release 1.4.0 nem substitui os critérios de aceite. A tabela e os registros seguintes referem-se à base publicada; validar novamente o novo executável antes de distribuir.
+
+Verificação desta revisão: build Release Win32/x64 aprovado em cópia isolada, com MSVC v145, SDK 10.0.26100.0 e dependências fixadas. Backend: 67 testes SQLite aprovados e migração/reversão/reaplicação sem divergência com o modelo. Não houve execução do `.exe`, teste PostgreSQL ou chamada real nessa validação.
+
+### Base publicada 1.3.1
 
 **Upphone SIP 1.3.1 está publicado**, com instaladores e versões portáteis de 32 e 64 bits, compilados a partir da tag `v1.3.1` numa pasta limpa, com `build/setup.ps1` e `build/build.ps1 -Installer`. O que mudou desde a 1.0.0 está nos itens 27 a 32 da seção 3 e em `build/notas/`. A partir da 1.2.0 o app avisa sozinho quando sai uma versão nova (item 30): nas próximas releases, a seção "## O que mudou" das notas é o texto que os clientes veem no aviso.
 

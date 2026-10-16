@@ -37,6 +37,12 @@
     <Filter Include="Source Files\Data">
       <UniqueIdentifier>{da1be53d-d09e-41f8-8a49-8c450d8273c4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Provisioning">
+      <UniqueIdentifier>{3b8f1d2e-6a4c-4e2b-9f71-2c5d8e0a4b13}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Provisioning">
+      <UniqueIdentifier>{c7e2a9d4-1f35-4b8e-a062-9d4e3b7f1c28}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AccountDlg.cpp">
@@ -107,6 +113,24 @@
     </ClCompile>
     <ClCompile Include="UpdateDlg.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ActivationDlg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MyAccountDlg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudioDlg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Provisioning\Provisioning.cpp">
+      <Filter>Source Files\Provisioning</Filter>
+    </ClCompile>
+    <ClCompile Include="Provisioning\ProvisioningHttp.cpp">
+      <Filter>Source Files\Provisioning</Filter>
+    </ClCompile>
+    <ClCompile Include="Provisioning\ProvisioningSupport.cpp">
+      <Filter>Source Files\Provisioning</Filter>
     </ClCompile>
     <ClCompile Include="Transfer.cpp">
       <Filter>Source Files</Filter>
@@ -295,6 +319,24 @@
     </ClInclude>
     <ClInclude Include="UpdateDlg.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ActivationDlg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MyAccountDlg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AudioDlg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Provisioning\Provisioning.h">
+      <Filter>Header Files\Provisioning</Filter>
+    </ClInclude>
+    <ClInclude Include="Provisioning\ProvisioningHttp.h">
+      <Filter>Header Files\Provisioning</Filter>
+    </ClInclude>
+    <ClInclude Include="Provisioning\ProvisioningSupport.h">
+      <Filter>Header Files\Provisioning</Filter>
     </ClInclude>
     <ClInclude Include="Transfer.h">
       <Filter>Header Files</Filter>

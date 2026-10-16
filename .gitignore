@@ -30,3 +30,8 @@ Contacts.xml
 *_log.txt
 crash-dump_*
 block_*.dat
+
+# estado local do provisionamento (tokens e configuração protegidos com DPAPI)
+provisioning.dat
+provisioning.dat.tmp
+provisioning_log.txt.*

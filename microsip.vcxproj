@@ -434,6 +434,12 @@
     <ClCompile Include="ThemeDialog.cpp" />
     <ClCompile Include="Transfer.cpp" />
     <ClCompile Include="UpdateDlg.cpp" />
+    <ClCompile Include="ActivationDlg.cpp" />
+    <ClCompile Include="MyAccountDlg.cpp" />
+    <ClCompile Include="AudioDlg.cpp" />
+    <ClCompile Include="Provisioning\Provisioning.cpp" />
+    <ClCompile Include="Provisioning\ProvisioningHttp.cpp" />
+    <ClCompile Include="Provisioning\ProvisioningSupport.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AAOptionsDlg.h" />
@@ -505,6 +511,12 @@
     <ClInclude Include="ThemeDialog.h" />
     <ClInclude Include="Transfer.h" />
     <ClInclude Include="UpdateDlg.h" />
+    <ClInclude Include="ActivationDlg.h" />
+    <ClInclude Include="MyAccountDlg.h" />
+    <ClInclude Include="AudioDlg.h" />
+    <ClInclude Include="Provisioning\Provisioning.h" />
+    <ClInclude Include="Provisioning\ProvisioningHttp.h" />
+    <ClInclude Include="Provisioning\ProvisioningSupport.h" />
     <ClInclude Include="Utils\StringConverter.h" />
   </ItemGroup>
   <ItemGroup>
