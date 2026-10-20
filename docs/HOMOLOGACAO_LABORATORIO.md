@@ -17,7 +17,7 @@ Registro no formato da seção 9.3 da [especificação](ESPECIFICACAO_SOFTPHONE_
 
 ## Artefatos
 
-Versão 1.4.0, MicroSIP 3.22.16 Lite, pjproject `bd69054a` (2.17-dev, TLS pelo Schannel do Windows desde 20/10 à tarde, com o patch `build/pjproject/schannel-rand-bytes.patch`), branch `provisionamento` sobre o commit `c10ed84` **com alterações ainda não commitadas** (as correções abaixo). Não assinados (o certificado da Upp não existe ainda).
+Versão 1.4.0, MicroSIP 3.22.16 Lite, pjproject `bd69054a` (2.17-dev, TLS pelo Schannel do Windows desde 20/10 à tarde, com o patch `build/pjproject/schannel-rand-bytes.patch`), branch `provisionamento` commit `d66918b` (as fontes destes artefatos, com as correções abaixo). Não assinados (o certificado da Upp não existe ainda).
 
 | Arquivo | SHA-256 | Bytes |
 | --- | --- | --- |
