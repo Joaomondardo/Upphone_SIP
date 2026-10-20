@@ -337,8 +337,7 @@ void ProvisioningClient::Init()
     std::string data;
     if (!ProtectedRead(m_storePath, data)) {
         if (::PathFileExists(m_storePath)) {
-            Log(_T("provisioning.dat não pôde ser lido (copiado de outro usuário ou computador?): ignorado"));
-            ProtectedDelete(m_storePath);
+            m_deleteStoreReason = _T("provisioning.dat não pôde ser lido (copiado de outro usuário ou computador?): ignorado");
         }
         return;
     }
@@ -349,7 +348,7 @@ void ProvisioningClient::Init()
         SecureZeroMemory(&data[0], data.size());
     }
     if (!parsed) {
-        Log(_T("provisioning.dat corrompido: ignorado"));
+        InitLog(_T("provisioning.dat corrompido: ignorado"));
         return;
     }
     m_store = store;
@@ -359,8 +358,7 @@ void ProvisioningClient::Init()
     CString storedMachine = JStr(m_store, "machine_id");
     if (!storedMachine.IsEmpty() && !m_machineId.IsEmpty() && storedMachine != m_machineId) {
         // the same Windows profile in another computer (cloned image): a new activation is needed
-        Log(_T("provisioning.dat de outro computador (imagem clonada?): apagado, é preciso ativar de novo"));
-        ProtectedDelete(m_storePath);
+        m_deleteStoreReason = _T("provisioning.dat de outro computador (imagem clonada?): apagado, é preciso ativar de novo");
         m_store = Json::Value();
         return;
     }
@@ -376,32 +374,33 @@ void ProvisioningClient::Init()
         m_rejectedRevision = JInt(rejected, "revision", 0);
         m_rejectedError = JStr(rejected, "error");
     }
-    // a configuration received during a call in the previous session: no call is active now
+    // a configuration received during a call in the previous session: no call is active now (saved by Start)
     if (IsObject(Get(m_store, "pending"))) {
-        Json::Value previousStore = m_store;
         Json::Value pending = Get(m_store, "pending");
         m_store["config"] = pending["config"];
         m_store["config_etag"] = pending["etag"];
         m_store["config_revision"] = pending["revision"];
         m_store.removeMember("pending");
-        if (!SaveStore()) {
-            m_store = previousStore;
-        }
+        m_saveStoreOnStart = true;
     }
     CString error;
     if (!ParseConfig(Get(m_store, "config"), m_config, error)) {
-        Log(_T("configuração guardada não pode ser usada: ") + error);
+        InitLog(_T("configuração guardada não pode ser usada: ") + error);
     }
     // Upphone: check the offline limit before the first SIP registration, not only after a failed heartbeat.
     if (m_blockedText.IsEmpty() && m_config.valid && m_config.offlineGraceHours > 0 && m_lastContact > 0
         && Now() - m_lastContact > (time_t)m_config.offlineGraceHours * 3600) {
         CString text;
         text.Format(_T("Sem contato com a Upp há mais de %d horas. Confira a conexão com a internet."), m_config.offlineGraceHours);
-        SetBlocked(text);
+        // as SetBlocked, but the file and the log wait for Start (there is no main window yet)
+        m_blockedText = text;
+        m_store["blocked"] = ToUtf8(text);
+        m_saveStoreOnStart = true;
+        InitLog(_T("uso do ramal suspenso: ") + text);
     }
     ApplySettingsOverrides(&accountSettings);
     ApplyAccount(&accountSettings);
-    Log(_T("app iniciado com o ramal provisionado ") + m_config.account.label);
+    InitLog(_T("app iniciado com o ramal provisionado ") + m_config.account.label);
 }
 
 void ProvisioningClient::ApplySettingsOverrides(AccountSettings* settings) const
@@ -430,6 +429,20 @@ void ProvisioningClient::ApplyAccount(AccountSettings* settings) const
 void ProvisioningClient::Start(HWND mainWnd)
 {
     m_mainWnd = mainWnd;
+    // what Init found: only this instance (the one that stays open) writes, deletes and logs
+    for (const CString& line : m_initLog) {
+        Log(line);
+    }
+    m_initLog.clear();
+    if (!m_deleteStoreReason.IsEmpty()) {
+        Log(m_deleteStoreReason);
+        ProtectedDelete(m_storePath);
+        m_deleteStoreReason.Empty();
+    }
+    if (m_saveStoreOnStart) {
+        m_saveStoreOnStart = false;
+        SaveStore();
+    }
     if (!m_started) {
         m_started = true;
         m_stop = false;
@@ -505,7 +518,7 @@ void ProvisioningClient::LoadBootstrap()
         DWORD shortSize = _countof(name);
         CString shortName = GetUserName(name, &shortSize) ? name : _T("");
         if (user.CompareNoCase(current) != 0 && user.CompareNoCase(shortName) != 0) {
-            Log(_T("código do instalador é de outro usuário do Windows: ignorado"));
+            InitLog(_T("código do instalador é de outro usuário do Windows: ignorado"));
             return;
         }
     }
@@ -521,7 +534,7 @@ void ProvisioningClient::LoadBootstrap()
     GetPrivateProfileString(_T("Ativacao"), _T("servidor"), NULL, buffer, _countof(buffer), m_bootstrapFile);
     m_bootstrapServer = buffer;
     m_bootstrapServer.Trim();
-    Log(_T("código de ativação deixado pelo instalador: …") + code.Right(4));
+    InitLog(_T("código de ativação deixado pelo instalador: …") + code.Right(4));
 }
 
 void ProvisioningClient::ConsumeBootstrap()

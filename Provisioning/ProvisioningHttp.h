@@ -24,13 +24,17 @@ struct HttpResponse {
     std::string body;       // UTF-8
     CString error;          // network error, when status is 0
     CString supportCode;    // short code for the support (UPP-NET-12029...)
+    bool truncated = false; // the body passed maxBytes and was cut
 };
 
 // Synchronous HTTPS request, for the provisioning worker thread (never the UI thread).
 // The server certificate is always validated (no exceptions), the Windows proxy settings are used and
 // redirects are not followed. Plain http is accepted only for the local computer (development).
+// followRedirects: only for requests without credentials (the installer download, checked by its SHA-256): up to
+// 5 redirects, each destination accepted only with https (or http on this computer), like IsAllowedServerUrl.
+// maxBytes: 0 = the 4 MB of the API answers.
 HttpResponse HttpRequest(const CString& method, const CString& url, const CString& headers,
-    const std::string& body, DWORD timeoutMs = 30000);
+    const std::string& body, DWORD timeoutMs = 30000, size_t maxBytes = 0, bool followRedirects = false);
 
 // https:// (or http://localhost for development). reason: why it is not accepted.
 bool IsAllowedServerUrl(const CString& url, CString* reason = nullptr);

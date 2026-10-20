@@ -52,6 +52,7 @@ protected:
 	CString m_recordFile;
 	int m_recordTicks = 0;
 	int m_meterPause = 0;
+	bool m_hiddenPause = false; // meter stopped while the window is hidden or minimized
 
 	void FillDevices();
 	CString Selected(int id) const;

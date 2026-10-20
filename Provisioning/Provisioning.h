@@ -25,6 +25,7 @@
 #include <mutex>
 #include <string>
 #include <thread>
+#include <vector>
 
 struct AccountSettings;
 
@@ -91,6 +92,8 @@ class ProvisioningClient
 {
 public:
     // Before the main window (end of AccountSettings::Init): reads the protected file and the installer bootstrap.
+    // Read-only: it also runs in a second start that only passes its command line (tel: link, /answer) to the app
+    // already open and exits; what has to be written, deleted or logged waits for Start.
     void Init();
     // Settings and account that come from the server (called by AccountSettings::SettingsLoad and Init).
     void ApplySettingsOverrides(AccountSettings* settings) const;
@@ -195,6 +198,12 @@ private:
     CString m_activationServer;
     CString m_requestKey;
     bool m_activationFromBootstrap = false;
+
+    // left by Init for Start (only the instance that stays open writes the file and the log)
+    std::vector<CString> m_initLog;
+    CString m_deleteStoreReason;
+    bool m_saveStoreOnStart = false;
+    void InitLog(const CString& message) { m_initLog.push_back(message); }
 
     // installer bootstrap (%ProgramData%\Upphone SIP\ativacao.ini)
     CString m_bootstrapFile;

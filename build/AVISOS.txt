@@ -1,0 +1,37 @@
+﻿Upphone SIP - avisos de licença e código-fonte
+===============================================
+
+O Upphone SIP é software livre, distribuído sob a GNU General Public License
+versão 3 (arquivo LICENSE.txt, na mesma pasta). Você pode usar, estudar,
+modificar e redistribuir o programa nos termos dessa licença. Implantação,
+hospedagem, gestão e suporte da Upp Tecnologia são serviços contratados à
+parte e não restringem esses direitos.
+
+Código-fonte correspondente
+---------------------------
+O código-fonte de cada versão, com as alterações da Upp e as instruções de
+compilação (build/build.ps1 e README.md), está em:
+
+    https://github.com/Joao-Mondardo-Upp/Upphone_SIP
+
+Use a tag da versão instalada (por exemplo v1.4.0). As dependências usadas
+na compilação estão fixadas por commit em build/pins.ps1.
+
+Baseado em
+----------
+- MicroSIP 3.22.16 Lite, Copyright (C) 2011-2025 MicroSIP
+  (https://www.microsip.org), GPL versão 2 ou posterior.
+- pjproject (https://www.pjsip.org), GPL versão 2 ou posterior.
+- bcg729 (G.729), Belledonne Communications, GPL versão 3.
+- SQLiteCpp, Sébastien Rombauts, licença MIT; SQLite, domínio público.
+- JsonCpp, Baptiste Lepilleur, domínio público / licença MIT.
+- HIDAPI, Alan Ott e colaboradores (licença BSD, GPL v3 ou HIDAPI).
+
+Componentes com licença em revisão
+----------------------------------
+Os componentes abaixo vêm do MicroSIP e trazem avisos próprios que restringem
+a redistribuição do código-fonte. A Upp está verificando a autorização ou a
+substituição deles (especificação UPP-SIP-ESP-001, seção 10.3):
+
+- CMarkup (lib/Markup.*), First Objective Software.
+- MessageBoxX (lib/MessageBoxX.*).

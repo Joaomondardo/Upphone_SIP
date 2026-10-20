@@ -2,7 +2,7 @@
 
 Documento para continuar o trabalho em outra máquina. Resume as versões publicadas 1.0.0 a 1.3.1 e o desenvolvimento da 1.4.0 (outubro de 2026), por que cada decisão foi tomada e o que está pendente.
 
-- Repositório: https://github.com/Joao-Mondardo-Upp/Upphone_SIP (público)
+- Repositório: <https://github.com/Joao-Mondardo-Upp/Upphone_SIP> (público)
 - Releases publicadas: [v1.3.1](https://github.com/Joao-Mondardo-Upp/Upphone_SIP/releases/tag/v1.3.1) (atual), [v1.3.0](https://github.com/Joao-Mondardo-Upp/Upphone_SIP/releases/tag/v1.3.0), [v1.2.0](https://github.com/Joao-Mondardo-Upp/Upphone_SIP/releases/tag/v1.2.0), [v1.1.0](https://github.com/Joao-Mondardo-Upp/Upphone_SIP/releases/tag/v1.1.0) e [v1.0.0](https://github.com/Joao-Mondardo-Upp/Upphone_SIP/releases/tag/v1.0.0)
 - Como montar o ambiente e compilar: [README.md](../README.md)
 
@@ -14,18 +14,20 @@ Documento para continuar o trabalho em outra máquina. Resume as versões public
 
 Em 15/10/2026, `const.h` passou a identificar a versão 1.4.0. A implementação adiciona módulo `Provisioning/`, ativação por código, telas de conta/áudio, perfil remoto e comunicação de estado do dispositivo. O backend Python/FastAPI está na pasta irmã `upp-provisionamento`, com API, CLI, migração inicial e testes; o usuário autorizou publicá-lo em repositório privado separado `Joaomondardo/upp-provisionamento` e usar o fork `Joaomondardo/Upphone_SIP` para a branch `provisionamento` do aplicativo. Consulte [PROVISIONAMENTO.md](PROVISIONAMENTO.md) para operação e limites atuais.
 
-O painel web ainda não está incluído no backend. A automação do instalador com `/SERVIDOR`/`ativacao.ini`, implantação dos servidores, integração SyssVoIP, testes de chamadas/áudio/codecs e monitoramento de filas permanecem pendentes de implementação e/ou homologação conforme cada item. A presença de heartbeat ou de código de integração não comprova resultado na telefonia.
+Em 19/10/2026 o backend ganhou o painel web (`/painel/`, com segundo fator, CSRF e escopo por cliente) e o pacote de implantação (`deploy/`: Docker Compose com PostgreSQL e HTTPS pelo Caddy, testado localmente); são 83 testes passando em SQLite e em PostgreSQL. O instalador ganhou a página Ativação e os parâmetros `/CODIGO`, `/SERVIDOR` e `/USUARIO`, que gravam o `ativacao.ini` (testado na VM). Na mesma data, uma segunda rodada no notebook (Asterisk de teste e backend reais) e com testes isolados de rede achou e corrigiu mais quatro defeitos: o download seguia redirecionamento de HTTPS para HTTP, a instância que só repassa a linha de comando (`tel:`, `/answer`) gravava e podia apagar o `provisioning.dat`, a versão do app tinha um único endereço de download para os instaladores de 64 e 32 bits, e o botão "Recarregar configuração" aparecia cortado. Em 20/10/2026 a rodada da VM cobriu a atualização de um cliente 1.3.1 com conta manual, a reversão autorizada, a atualização obrigatória, o instalador de 32 bits e a credencial copiada para outro usuário do Windows, e corrigiu mais três defeitos (aviso obrigatório que só voltava no intervalo do usuário, parâmetros de linha de comando com espaço no fim e título do aviso obrigatório). O registro completo dos casos T01–T20, com hashes dos artefatos, está em [HOMOLOGACAO_LABORATORIO.md](HOMOLOGACAO_LABORATORIO.md). Instalador, ativação, janelas e atualização foram testados numa VM Windows Server 2022 (VirtualBox) em 19/10/2026; o teste achou e corrigiu dois defeitos: o "Não" no UAC da atualização passava como instalação feita (o app agora acompanha o processo do instalador) e o código deixado pelo instalador num computador já ativado não aparecia na tela de ativação depois de sair da conta. As versões do app ganharam distribuição gradual e os clientes, janela de manutenção. O app passou a baixar e conferir o instalador oferecido pela Upp (SHA-256, versão e assinatura) antes de executar; as conferências foram testadas isoladamente e o fluxo completo, na VM. As janelas Ativação, Minha conta e Áudio passaram a ser independentes da janela principal (minimizar o app não as esconde) e o medidor do microfone pausa com a janela Áudio escondida (verificado na VM). Seguem pendentes: servidores de homologação e produção, integração SyssVoIP, testes de chamadas, áudio e codecs na central real, TLS/SRTP (o pjproject do build não tem SSL) e monitoramento de filas. A presença de heartbeat ou de código de integração não comprova resultado na telefonia.
+
+Em 20/10/2026 à tarde o build ganhou **SIP sobre TLS e SRTP** sem OpenSSL, pelo Schannel do Windows (`config_site.h`), e o app passou a conferir o certificado da central (cadeia do Windows e nome, só TLS 1.2+), a não registrar em UDP uma conta configurada para TLS e a mostrar "Certificado não confiável" ou "Certificado não confere". Um patch no pjproject fixado (`build/pjproject/schannel-rand-bytes.patch`, aplicado pelo `build.ps1`) faz as chaves SRTP virem do gerador seguro do Windows. Testado na VM com uma central TLS de teste; o registro está no T11 de [HOMOLOGACAO_LABORATORIO.md](HOMOLOGACAO_LABORATORIO.md).
 
 A especificação [Markdown](ESPECIFICACAO_SOFTPHONE_UPP.md) e [Word](ESPECIFICACAO_SOFTPHONE_UPP.docx) registra a base 1.3.1 examinada e o escopo desejado, ainda não atendido integralmente. Publicar a branch não publica uma release 1.4.0 nem substitui os critérios de aceite. A tabela e os registros seguintes referem-se à base publicada; validar novamente o novo executável antes de distribuir.
 
-Verificação desta revisão: build Release Win32/x64 aprovado em cópia isolada, com MSVC v145, SDK 10.0.26100.0 e dependências fixadas. Backend: 67 testes SQLite aprovados e migração/reversão/reaplicação sem divergência com o modelo. Não houve execução do `.exe`, teste PostgreSQL ou chamada real nessa validação.
+Verificação da revisão de 15/10/2026: build Release Win32/x64 aprovado em cópia isolada, com MSVC v145, SDK 10.0.26100.0 e dependências fixadas. Backend: 67 testes SQLite aprovados e migração/reversão/reaplicação sem divergência com o modelo. Não houve execução do `.exe`, teste PostgreSQL ou chamada real nessa validação (feitos depois, em laboratório: ver acima e [HOMOLOGACAO_LABORATORIO.md](HOMOLOGACAO_LABORATORIO.md)).
 
 ### Base publicada 1.3.1
 
 **Upphone SIP 1.3.1 está publicado**, com instaladores e versões portáteis de 32 e 64 bits, compilados a partir da tag `v1.3.1` numa pasta limpa, com `build/setup.ps1` e `build/build.ps1 -Installer`. O que mudou desde a 1.0.0 está nos itens 27 a 32 da seção 3 e em `build/notas/`. A partir da 1.2.0 o app avisa sozinho quando sai uma versão nova (item 30): nas próximas releases, a seção "## O que mudou" das notas é o texto que os clientes veem no aviso.
 
 | Item | Situação |
-|---|---|
+| --- | --- |
 | Identidade visual Upphone (nome, ícones, cores) | Pronto |
 | Tema claro/escuro seguindo o Windows, com troca ao vivo | Pronto e testado |
 | Português (Brasil) | Pronto |
@@ -40,7 +42,7 @@ Verificação desta revisão: build Release Win32/x64 aprovado em cópia isolada
 
 ## 2. Origem do código
 
-- Base: **MicroSIP 3.22.16, edição Lite**, código-fonte de https://www.microsip.org/source. O pacote recebido já vinha personalizado: **configurações fixas no código e tela de configurações desativada** (`AccountSettings::SettingsLoad` em `settings.cpp` e `CmainDlg::OnMenuSettings` vazio em `mainDlg.cpp`). Isso foi mantido de propósito.
+- Base: **MicroSIP 3.22.16, edição Lite**, código-fonte de <https://www.microsip.org/source>. O pacote recebido já vinha personalizado: **configurações fixas no código e tela de configurações desativada** (`AccountSettings::SettingsLoad` em `settings.cpp` e `CmainDlg::OnMenuSettings` vazio em `mainDlg.cpp`). Isso foi mantido de propósito.
 - O MicroSIP não traz as bibliotecas de terceiros. Ele precisa ficar **dentro do pjproject**, como `<pjproject>\microsip`, e é compilado junto com ele.
 - Dependências, fixadas em `build/pins.ps1`:
   - pjproject `bd69054a696054db8fb4e62b759a3ecaf26c0189` (master de 09/10/2026, 2.17-dev). Foi identificado pelo comentário do ZIP baixado do GitHub e conferido arquivo por arquivo contra a cópia usada no build.
@@ -81,7 +83,7 @@ Verificação desta revisão: build Release Win32/x64 aprovado em cópia isolada
 11. **Ícones da bandeja** refeitos com a logo da Upphone e um ponto de status. Os originais do MicroSIP ficaram fora do repositório, em `microsip-icons-original\`, na máquina original.
 12. **Nome visível "Upphone SIP"** (`_GLOBAL_NAME_NICE`). O nome interno `_GLOBAL_NAME` continua "MicroSIP", porque é usado na classe da janela e para detectar a instância já aberta.
 13. **Botões CONF e REC removidos** (`Dialer.cpp`, `addConf`/`addRec = false`).
-14. **Links do menu** (site, ajuda, downloads, reportar problema) apontam para https://upphone.com.br/.
+14. **Links do menu** (site, ajuda, downloads, reportar problema) apontam para <https://upphone.com.br/>.
 15. **Registros e Contatos**:
     - cabeçalho das colunas legível;
     - rodapé alinhado;
@@ -175,7 +177,7 @@ Verificação desta revisão: build Release Win32/x64 aprovado em cópia isolada
 ## 4. Decisões e motivos
 
 | Decisão | Motivo |
-|---|---|
+| --- | --- |
 | Sem tela de configurações | Já vinha assim no código recebido: os valores são fixos para os clientes |
 | G.711 A-law, u-law e G.729 | Exigência do PABX da Upp |
 | Sem vídeo, Opus e TLS/SRTP | Não eram necessários na 1.0.0 e reduzem dependências (OpenSSL, ffmpeg etc.) |
@@ -196,7 +198,7 @@ Verificação desta revisão: build Release Win32/x64 aprovado em cópia isolada
 ## 5. Mapa do código (o que foi criado ou alterado)
 
 | Arquivo | O que tem |
-|---|---|
+| --- | --- |
 | `Theme.h/.cpp` | Paleta claro/escuro, leitura do modo do Windows, `UPPHONE_THEME`, coluna ordenada das listas |
 | `define.h` | `_GLOBAL_BRAND_ACCENT`, macros `_GLOBAL_THEME_*`, links upphone.com.br, nome "Upphone SIP" |
 | `const.h` | Versão, timestamp, empresa, vídeo desligado |
@@ -222,7 +224,7 @@ Verificação desta revisão: build Release Win32/x64 aprovado em cópia isolada
 | `microsip.vcxproj` | `Upphone.exe`, defines de compatibilidade, arquivos novos |
 | `build/` | `build.ps1`, `setup.ps1`, `pins.ps1`, `release.ps1`, `Upphone.iss`, `pjproject/config_site.h`, `notas/` |
 
-Várias alterações em arquivos do MicroSIP estão marcadas com `// Upphone:` (`git grep "Upphone:"`), mas nem todas. O primeiro commit deste repositório (`0c654b0`) já contém as alterações da 1.0.0. Para ver tudo o que mudou em relação ao MicroSIP original, compare com o código-fonte 3.22.16 de https://www.microsip.org/source.
+Várias alterações em arquivos do MicroSIP estão marcadas com `// Upphone:` (`git grep "Upphone:"`), mas nem todas. O primeiro commit deste repositório (`0c654b0`) já contém as alterações da 1.0.0. Para ver tudo o que mudou em relação ao MicroSIP original, compare com o código-fonte 3.22.16 de <https://www.microsip.org/source>.
 
 ---
 
@@ -257,7 +259,7 @@ Em ordem de prioridade:
    - abrir a ficha do cliente quando o telefone toca: o app já tem os ganchos `cmdIncomingCall`, `cmdCallAnswer` etc., que podem chamar um webhook do n8n e, a partir dele, um CRM ou helpdesk;
    - provisionamento automático da conta;
    - instalação automática das versões novas (o aviso já existe, item 30 da seção 3), depois da assinatura digital.
-4. **Opcionais:** TLS/SRTP (exige OpenSSL) e Opus.
+4. **Opcionais:** TLS/SRTP (exige OpenSSL) e Opus. O TLS/SRTP foi feito em 20/10/2026 com o Schannel do Windows, sem OpenSSL (ver o início deste documento).
 
 Os detalhes visuais da revisão do item 27, o teste em 150% e o click-to-call (`tel:`/`sip:`) foram feitos no item 31 da seção 3.
 
@@ -267,11 +269,13 @@ Os detalhes visuais da revisão do item 27, o teste em 150% e o click-to-call (`
 
 1. Instale o Git, o Visual Studio Build Tools 2026 (com **C++**, **ATL** e **MFC**) e, para gerar o instalador, o Inno Setup 6. Detalhes no README.
 2. Monte o ambiente:
+
    ```powershell
    git clone https://github.com/Joao-Mondardo-Upp/Upphone_SIP.git
    powershell -ExecutionPolicy Bypass -File .\Upphone_SIP\build\setup.ps1 -Dir C:\src\upphone
    powershell -ExecutionPolicy Bypass -File C:\src\upphone\microsip\build\build.ps1 -Installer
    ```
+
 3. Trabalhe em `C:\src\upphone\microsip`, sempre com `git pull` ao começar e `git push` ao terminar.
 4. Cadastre o ramal de novo no app: o `Upphone.ini` não vai para o git, porque tem a senha.
 5. Para publicar uma versão nova, siga a seção "Publicar uma versão" do README (`build/release.ps1`).

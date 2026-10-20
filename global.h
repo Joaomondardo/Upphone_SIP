@@ -93,6 +93,7 @@ enum EUserWndMessages
     UM_PROVISIONING_ACTIVATION,   // to the activation window: wParam 1 ok / 0 error, lParam CString* message
     UM_PROVISIONING_DEPROVISIONED, // lParam CString* message: the account left this computer
     UM_PROVISIONING_UPDATE,       // a version of the app offered by the Upp platform
+    UM_TLS_CERT_ERROR,            // Upphone: TLS to the PBX failed: wParam certificate verify flags, or lParam pj_status_t of the negotiation
     IDT_TIMER_PROVISIONING,
     IDT_TIMER_AUDIO_LEVEL,
 };

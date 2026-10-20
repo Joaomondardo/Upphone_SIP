@@ -46,6 +46,8 @@ void MyAccountDlg::Show(CWnd* pParent)
         return;
     }
     s_open = dlg;
+    // a window of its own, not owned by the main one: minimizing the main window does not hide it
+    ::SetWindowLongPtr(dlg->m_hWnd, GWLP_HWNDPARENT, 0);
     dlg->CenterWindow(CWnd::GetDesktopWindow());
     dlg->ShowWindow(SW_SHOWNORMAL);
     dlg->SetForegroundWindow();

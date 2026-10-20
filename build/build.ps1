@@ -98,6 +98,18 @@ if (-not (Test-Path $configSite) -or ((Get-FileHash $configSite).Hash -ne (Get-F
     Step 'Aplicando config_site.h no pjproject'
     Copy-Item $configSiteRepo $configSite -Force
 }
+# Correcoes do Upphone no pjproject fixado (build\pjproject\*.patch), aplicadas uma vez
+foreach ($patch in Get-ChildItem (Join-Path $PSScriptRoot 'pjproject\*.patch') | Sort-Object Name) {
+    $prev = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    & git -C $PjDir apply --reverse --check $patch.FullName 2>$null
+    $applied = ($LASTEXITCODE -eq 0)
+    $ErrorActionPreference = $prev
+    if (-not $applied) {
+        Step "Aplicando $($patch.Name) no pjproject"
+        Invoke-Git -C $PjDir apply $patch.FullName | Out-Null
+    }
+}
 
 Step 'Dependencias (versoes fixas em pins.ps1)'
 $sqliteSrc = Join-Path $TpDir 'SQLiteCpp-src'

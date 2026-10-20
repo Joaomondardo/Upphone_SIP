@@ -11,13 +11,14 @@ Crie o design da interface do **Upphone SIP**, o softphone da **Upp Tecnologia**
 **Formato:** janela pequena e estreita, em pé, parecida com um telefone: cerca de 260 px de largura por 440 px de altura, redimensionável. Fica aberta num canto da tela, sempre à mão, e pode ficar "sempre no topo". O app também vive na bandeja do Windows.
 
 **Identidade visual:**
+
 - cor de destaque: laranja Upphone **#E46737** (hover **#F08054**), usada no botão Chamar, no botão Atender, em teclas pressionadas, em botões ligados (Espera, Mudo, Não Perturbe) e na aba ativa;
 - vermelho **#FF3B30** para Terminar chamada e Recusar;
 - texto branco sobre laranja e sobre vermelho;
 - o app acompanha o tema do Windows, então **desenhe cada tela nos temas claro e escuro**:
 
 | Papel | Claro | Escuro |
-|---|---|---|
+| --- | --- | --- |
 | Fundo | #FFFFFF | #000000 |
 | Superfície (teclas, campos, cartões) | #F0F0F0 | #1A1A1A |
 | Superfície em hover | #E1E1E1 | #2C2C2C |
@@ -30,10 +31,12 @@ Crie o design da interface do **Upphone SIP**, o softphone da **Upp Tecnologia**
 - ícones simples de linha (telefone, microfone, alto-falante, pausa/espera, transferir, lupa, estrela, menu).
 
 **Estrutura da janela principal:**
+
 - **No topo:** três abas, **Telefone**, **Registros** e **Contatos**, e um botão de menu (☰) no canto direito.
 - **Embaixo:** uma barra de status fina. À esquerda, um ícone colorido com o estado da conta (registrado, conectando, erro); à direita, o ramal (por exemplo "5001"). Durante uma ligação, a barra mostra "Conectado 00:42"; com a chamada em espera, mostra "Espera 00:10 / 00:42".
 
 **Telas que preciso:**
+
 1. **Telefone (discador), sem ligação:**
    - campo de número no topo, com lista suspensa dos últimos números discados;
    - teclado numérico 3 × 4 (1, 2, 3 / 4, 5, 6 / 7, 8, 9 / \*, 0, #), com o dígito grande e as letras pequenas em cinza (ABC, DEF...);
@@ -89,6 +92,7 @@ Crie o design da interface do **Upphone SIP**, o softphone da **Upp Tecnologia**
 **O que não existe no app (não desenhar):** chat ou mensagens, chamada de vídeo, gravação de chamadas e conferência pelo discador.
 
 **Prioridades de usabilidade:**
+
 - ligar em dois cliques;
 - atender sem procurar o botão;
 - estado da ligação e cronômetro sempre visíveis;
@@ -100,16 +104,20 @@ Crie o design da interface do **Upphone SIP**, o softphone da **Upp Tecnologia**
 
 ## Parte 2: prompts para refinar cada tela
 
-**Discador**
+### Discador
+
 > Refine a aba Telefone do Upphone SIP. O teclado é o centro da tela: teclas grandes, com superfície #F0F0F0 (escuro #1A1A1A), canto de 6 px e borda de 1 px; ao passar o mouse, a borda fica laranja #E46737, e ao pressionar a tecla fica laranja com o dígito branco. O botão Chamar laranja ocupa a largura toda. Mostre também o estado "em ligação": a mesma tela com Espera (ligado, laranja), Terminar chamada (vermelho #FF3B30) e Transferir, e a barra de status com "Conectado 01:23".
 
-**Chamada recebida**
+### Chamada recebida
+
 > Desenhe a janela "Chamada Recebida" do Upphone SIP, um pop-up de cerca de 280 × 200 px que precisa chamar atenção sem assustar. Nome de quem liga grande ("Maria Souza"), número abaixo ("+55 48 3333-2222"), botões Atender (laranja #E46737) e Recusar (vermelho #FF3B30) lado a lado, texto discreto "feche a janela para ignorar a chamada". Versões clara e escura.
 
-**Registros e Contatos**
+### Registros e Contatos
+
 > Desenhe as abas Registros e Contatos do Upphone SIP numa janela estreita (260 px). Tabela densa, mas legível, com cabeçalho de colunas e seta de ordenação, ícones de chamada recebida, feita e perdida (perdida em vermelho), estrela de favorito e bolinha de presença nos contatos. Campo "Procurar" com lupa no rodapé. Mostre também o menu do botão direito aberto.
 
-**Conta e Atalhos**
+### Conta e Atalhos
+
 > Desenhe as janelas "Conta" (Nome da Conta, Servidor SIP, Senha com "exibir senha", botões Salvar e Cancelar) e "Atalhos" (grade de 8 linhas com Etiqueta, Número, Tipo, Alterar e BLF; caixas Habilitar e Posição inferior) do Upphone SIP, no estilo de janela de configuração do Windows 11, com a cor de destaque laranja #E46737 no botão principal.
 
 ---
@@ -117,7 +125,7 @@ Crie o design da interface do **Upphone SIP**, o softphone da **Upp Tecnologia**
 ## Parte 3: textos exatos da interface (pt-BR)
 
 | Onde | Textos |
-|---|---|
+| --- | --- |
 | Abas | Telefone · Registros · Contatos |
 | Discador | Chamar · Terminar chamada · Espera · Transferir · Rediscar · Limpar · Volume de recepção · Volume do Microfone · Silenciar recepção · Silenciar transmissão · DND (Não Perturbe) · AA (Atendimento automático) |
 | Barra de status | Conectado 00:42 · Espera 00:10 / 00:42 · Chamada ativa · Chamada em espera · Chamada colocada em espera pelo outro lado |

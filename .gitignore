@@ -34,4 +34,5 @@ block_*.dat
 # estado local do provisionamento (tokens e configuração protegidos com DPAPI)
 provisioning.dat
 provisioning.dat.tmp
+provisioning.dat.prev
 provisioning_log.txt.*

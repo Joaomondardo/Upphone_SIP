@@ -295,6 +295,11 @@ public:
     afx_msg LRESULT OnProvisioningUpdate(WPARAM wParam, LPARAM lParam);
     void ShowActivationIfNeeded();
     void ShowProvisionedUpdate(bool manual);
+    bool ProvisionedBelowMinimum(); // Upphone: installed version below the minimum of the Upp platform
+    // Upphone: why the TLS connection to the PBX failed (certificate, negotiation), shown until a registration works
+    afx_msg LRESULT OnTlsCertError(WPARAM wParam, LPARAM lParam);
+    CString m_tlsError;
+    bool m_tlsErrorFresh = false; // a TLS failure reported since the last registration result
     // Upphone: a sound of the app: a .wav next to Upphone.exe, or the embedded one
     CString SoundPath(const CString& name);
 #ifdef _GLOBAL_VIDEO

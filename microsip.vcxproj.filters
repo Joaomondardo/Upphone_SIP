@@ -132,6 +132,9 @@
     <ClCompile Include="Provisioning\ProvisioningSupport.cpp">
       <Filter>Source Files\Provisioning</Filter>
     </ClCompile>
+    <ClCompile Include="Provisioning\UpdateDownload.cpp">
+      <Filter>Source Files\Provisioning</Filter>
+    </ClCompile>
     <ClCompile Include="Transfer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -336,6 +339,9 @@
       <Filter>Header Files\Provisioning</Filter>
     </ClInclude>
     <ClInclude Include="Provisioning\ProvisioningSupport.h">
+      <Filter>Header Files\Provisioning</Filter>
+    </ClInclude>
+    <ClInclude Include="Provisioning\UpdateDownload.h">
       <Filter>Header Files\Provisioning</Filter>
     </ClInclude>
     <ClInclude Include="Transfer.h">

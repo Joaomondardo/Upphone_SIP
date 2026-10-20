@@ -114,8 +114,9 @@ static CString DescribeError(DWORD error)
     return text;
 }
 
-HttpResponse HttpRequest(const CString& method, const CString& url, const CString& headers,
-    const std::string& body, DWORD timeoutMs)
+// One request, never following a redirect: location gets the Location header of a 3xx answer.
+static HttpResponse HttpRequestOnce(const CString& method, const CString& url, const CString& headers,
+    const std::string& body, DWORD timeoutMs, size_t maxBytes, CString& location)
 {
     HttpResponse response;
     UrlParts parts;
@@ -147,8 +148,9 @@ HttpResponse HttpRequest(const CString& method, const CString& url, const CStrin
     InternetSetOption(session, INTERNET_OPTION_RECEIVE_TIMEOUT, &timeoutMs, sizeof(timeoutMs));
 
     HINTERNET connect = InternetConnect(session, parts.host, parts.port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
-    // no INTERNET_FLAG_IGNORE_CERT_*: certificate errors are never ignored; no redirects (they could take the
-    // token to another place); no cookies, cache or dialogs
+    // no INTERNET_FLAG_IGNORE_CERT_*: certificate errors are never ignored; WinINet never follows a redirect (they
+    // could take the token to another place, and WinINet follows https -> http without a word); no cookies, cache
+    // or dialogs
     DWORD flags = INTERNET_FLAG_RELOAD | INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_PRAGMA_NOCACHE
         | INTERNET_FLAG_NO_COOKIES | INTERNET_FLAG_NO_AUTO_REDIRECT | INTERNET_FLAG_NO_UI | INTERNET_FLAG_NO_AUTH
         | (secure ? INTERNET_FLAG_SECURE : 0);
@@ -175,12 +177,20 @@ HttpResponse HttpRequest(const CString& method, const CString& url, const CStrin
                 break;
             }
             response.body.append(buffer.data(), read);
-            if (response.body.size() > kMaxResponse) {
+            if (response.body.size() > maxBytes) {
+                response.truncated = true;
                 break;
             }
         }
         response.status = status;
         response.supportCode.Format(_T("UPP-HTTP-%u"), status);
+        if (status >= 300 && status < 400) {
+            TCHAR target[2048] = {};
+            DWORD length = sizeof(target);
+            if (HttpQueryInfo(request, HTTP_QUERY_LOCATION, target, &length, NULL)) {
+                location = target;
+            }
+        }
     }
     if (request) {
         InternetCloseHandle(request);
@@ -190,6 +200,42 @@ HttpResponse HttpRequest(const CString& method, const CString& url, const CStrin
     }
     InternetCloseHandle(session);
     return response;
+}
+
+HttpResponse HttpRequest(const CString& method, const CString& url, const CString& headers,
+    const std::string& body, DWORD timeoutMs, size_t maxBytes, bool followRedirects)
+{
+    if (maxBytes == 0) {
+        maxBytes = kMaxResponse;
+    }
+    // redirects are followed here: every destination passes the same rule as the address itself (https, or http
+    // only on this computer), at most 5 of them
+    CString current = url;
+    for (int hop = 0; ; hop++) {
+        CString location;
+        HttpResponse response = HttpRequestOnce(method, current, headers, body, timeoutMs, maxBytes, location);
+        bool redirect = response.status == 301 || response.status == 302 || response.status == 303
+            || response.status == 307 || response.status == 308;
+        if (!followRedirects || !redirect || location.IsEmpty()) {
+            return response;
+        }
+        TCHAR next[INTERNET_MAX_URL_LENGTH] = {};
+        DWORD size = _countof(next);
+        CString reason;
+        if (hop >= 5 || !InternetCombineUrl(current, location, next, &size, ICU_NO_ENCODE)
+            || !IsAllowedServerUrl(next, &reason)) {
+            HttpResponse refused;
+            if (hop >= 5) {
+                refused.error = _T("redirecionamentos demais");
+            }
+            else {
+                refused.error.Format(_T("redirecionado para um endereço não seguro (%s)"), location.Left(120).GetString());
+            }
+            refused.supportCode = _T("UPP-NET-REDIR");
+            return refused;
+        }
+        current = next;
+    }
 }
 
 } // namespace Provisioning

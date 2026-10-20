@@ -43,6 +43,8 @@ void AudioDlg::Show(CWnd* pParent)
         return;
     }
     s_open = dlg;
+    // a window of its own, not owned by the main one: minimizing the main window does not hide it
+    ::SetWindowLongPtr(dlg->m_hWnd, GWLP_HWNDPARENT, 0);
     dlg->CenterWindow(CWnd::GetDesktopWindow());
     dlg->ShowWindow(SW_SHOWNORMAL);
     dlg->SetForegroundWindow();
@@ -280,6 +282,17 @@ void AudioDlg::OnTimer(UINT_PTR nIDEvent)
         StopRecording(false);
         StopMeter();
         SetStatus(Translate(_T("During a call the tests are disabled; the choice is used in the next call.")));
+    }
+    // the microphone stays open only while the window is on the screen
+    bool visible = IsWindowVisible() && !IsIconic();
+    if (!visible && (m_nullSlot != PJSUA_INVALID_ID || m_recorder != PJSUA_INVALID_ID)) {
+        StopRecording(false);
+        StopMeter();
+        m_hiddenPause = true;
+    }
+    else if (visible && m_hiddenPause && !inCall) {
+        m_hiddenPause = false;
+        StartMeter();
     }
     m_ButtonSpeaker.EnableWindow(!inCall);
     m_ButtonRing.EnableWindow(!inCall);

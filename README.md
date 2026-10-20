@@ -23,7 +23,7 @@ Escopo e critérios de aceite: [especificação Markdown](docs/ESPECIFICACAO_SOF
 
 Este repositório é a pasta do aplicativo. Para compilar, ele precisa ficar **dentro** do pjproject:
 
-```
+```text
 pjproject\                  <- https://github.com/pjsip/pjproject
   pjlib\ pjsip\ pjmedia\ ...
   third_party\
@@ -31,6 +31,7 @@ pjproject\                  <- https://github.com/pjsip/pjproject
     build\build.ps1         <- build completo (32/64 bits + instalador)
     build\Upphone.iss       <- instalador (Inno Setup 6)
     build\pjproject\config_site.h
+    build\pjproject\*.patch   <- correções do Upphone no pjproject fixado
 ```
 
 ### Versões fixadas
@@ -38,7 +39,7 @@ pjproject\                  <- https://github.com/pjsip/pjproject
 As dependências externas ficam presas a commits exatos em [`build/pins.ps1`](build/pins.ps1). O `build.ps1` baixa e confere essas versões e se recusa a compilar com um pjproject diferente (a não ser com `-AllowOtherPjproject`).
 
 | Dependência | Commit | Observação |
-|---|---|---|
+| --- | --- | --- |
 | [pjproject](https://github.com/pjsip/pjproject/commit/bd69054a696054db8fb4e62b759a3ecaf26c0189) | `bd69054a69` | master de 09/10/2026 (2.17-dev) |
 | [bcg729](https://github.com/BelledonneCommunications/bcg729/commit/fb195811fe630415c9bf433c0c0bebde14314ff2) | `fb195811fe` | G.729, 14/07/2026 |
 | [SQLiteCpp](https://github.com/SRombauts/SQLiteCpp/commit/d07876c3090fa57f92af9e7fc92bb4b3f3c27390) | `d07876c309` | inclui o sqlite3, 02/10/2026 |
@@ -66,7 +67,7 @@ Para compilar uma versão publicada, faça `git checkout v1.3.1` (ou outra tag) 
 
 O `build.ps1`:
 
-1. aplica `build\pjproject\config_site.h` no pjproject e confere o commit dele;
+1. aplica `build\pjproject\config_site.h` e os patches `build\pjproject\*.patch` no pjproject e confere o commit dele (o `schannel-rand-bytes.patch` faz as chaves SRTP virem do gerador seguro do Windows);
 2. baixa (nas versões fixadas) e compila o **bcg729** (G.729) e o **SQLiteCpp**;
 3. compila o pjproject (`Release-Static`) e o `Upphone.exe` para Win32 e x64;
 4. copia o resultado para `dist\<versão>\<plataforma>\` e gera os instaladores.
@@ -74,7 +75,7 @@ O `build.ps1`:
 Opções úteis:
 
 | Opção | Efeito |
-|---|---|
+| --- | --- |
 | `-Platforms x64` | compila só uma plataforma |
 | `-SkipPjproject` | não recompila o pjproject (mais rápido) |
 | `-AllowOtherPjproject` | aceita um pjproject fora do commit fixado (só para testes) |
@@ -104,4 +105,4 @@ O app segue a opção do Windows "Escolha o modo de aplicativo padrão" e troca 
 
 GNU GPL v3 (veja `LICENSE`). O MicroSIP e o pjproject são GPL v2 ou posterior e o bcg729 é GPL v3, por isso o conjunto é distribuído sob a GPL v3.
 
-Baseado no MicroSIP, Copyright (C) 2011-2026 MicroSIP (www.microsip.org).
+Baseado no MicroSIP, Copyright (C) 2011-2026 MicroSIP (<https://www.microsip.org>).

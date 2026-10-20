@@ -635,6 +635,12 @@ BOOL CALLBACK MsipEnumWindowsProc(HWND hWnd, LPARAM lParam)
 BOOL CmicrosipApp::InitInstance()
 {
     try {
+        // Upphone: switches compared without the spaces around them (PowerShell Start-Process passes
+        // "/minimized " and the app used to dial "/minimized")
+        static CString trimmedCmdLine;
+        trimmedCmdLine = theApp.m_lpCmdLine;
+        trimmedCmdLine.Trim();
+        theApp.m_lpCmdLine = trimmedCmdLine.GetBuffer();
         CString strCommandLine = theApp.m_lpCmdLine;
         accountSettings.Init();
 

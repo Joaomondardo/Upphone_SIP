@@ -20,7 +20,7 @@ O modelo comercial proposto combina distribuição do aplicativo sob GPLv3 com s
 Esta seção registra evidências de leitura do código e da documentação, sem substituir testes de execução. Relatos de testes anteriores no histórico não homologam uma nova compilação.
 
 | Área | Evidência atual | Consequência para o escopo |
-|---|---|---|
+| --- | --- | --- |
 | Aplicativo e marca | `const.h:20`, `README.md`: Upphone 1.3.1, MicroSIP Lite 3.22.16, português, identidade UPP e temas claro/escuro | Reaproveitar o trabalho existente; customização visual é evolução |
 | Build e distribuição | `build/build.ps1`, `build/Upphone.iss`, `build/pins.ps1`: Win32/x64, instalador Inno Setup, dependências fixadas | Acrescentar ativação, assinatura obrigatória na distribuição aprovada, documentação e pacote de fontes |
 | Instalação | `build/Upphone.iss:20`: instalação administrativa em Arquivos de Programas, dados por usuário | Testar técnico instalador e usuário final distintos; não cifrar credenciais no perfil do técnico |
@@ -49,7 +49,7 @@ Não se presume a tecnologia interna da central, disponibilidade de AMI/ARI, API
 **Obrigatório:** requisito necessário para a fase correspondente. **Condicional:** obrigatório quando o recurso fizer parte do perfil contratado do cliente. **Opcional:** depende de contratação/decisão específica e não integra o aceite básico.
 
 | ID | Requisito | Prioridade / fase | Critério de aceite |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | RF01 | Cadastrar clientes, usuários e ramais, com vínculo à central e ambiente | Obrigatório / F1 | Ramal associado ao cliente correto; cadastro UPP distingue vínculo de ramal existente de criação efetiva no PBX |
 | RF02 | Gerar configuração individual versionada, validada e auditável | Obrigatório / F1 | Perfil inclui parâmetros suportados e rejeita incompatibilidades antes da aplicação |
 | RF03 | Emitir código/token temporário de ativação | Obrigatório / F1 | Uso único, expiração, revogação, limite de tentativas e vínculo ao cliente/ramal/ambiente |
@@ -97,7 +97,7 @@ Na F1, manter o motor e a interface de telefonia existentes e criar um provision
 ### 4.1. Dados mínimos
 
 | Entidade | Dados essenciais |
-|---|---|
+| --- | --- |
 | Cliente | Identificador, nome, situação, ambientes e perfis autorizados |
 | Usuário | Identificador, cliente, nome, papel e situação |
 | Central | Fornecedor, instância, versão, ambiente, capacidades e referência segura de autenticação |
@@ -163,7 +163,7 @@ Redefinição exige autorização, limpeza dos segredos e nova ativação. Prefe
 ## 6. Segurança, operação e experiência
 
 | ID | Exigência | Verificação de aceite |
-|---|---|---|
+| --- | --- | --- |
 | RN01 | HTTPS com validação de certificado/nome em todo provisionamento, telemetria e atualização | Certificado inválido, expirado ou destino indevido é recusado; sem fallback HTTP |
 | RN02 | Tokens aleatórios, temporários, de uso único, com tentativas limitadas | Repetição, concorrência, expiração e tentativa em outro cliente/ambiente falham |
 | RN03 | Segredos cifrados em trânsito e em repouso | Sem senha em URL, código visível, log, dump exportado, pacote público ou fonte; chave de servidor fora do banco |
@@ -188,7 +188,7 @@ A experiência do cliente deverá apresentar nome, ramal, dispositivo ativo, reg
 Os valores abaixo são propostas de referência para planejamento, não desempenho medido nem SLA contratado. Serão fixados por perfil antes da homologação e incluídos no relatório.
 
 | Parâmetro | Proposta inicial |
-|---|---|
+| --- | --- |
 | Validade da ativação | 30 minutos; reenvio revoga a anterior |
 | Tentativas de ativação | Até 5 falhas por autorização, com limitação adicional por origem e ambiente |
 | Heartbeat do dispositivo | A cada 60 segundos, com variação para evitar sincronização em massa |
@@ -208,7 +208,7 @@ Dimensionar a API pelo número de dispositivos ativos, frequência de heartbeat,
 As fases aproveitam o instalador e a marca já existentes. F0 organiza pré-requisitos; F1 entrega provisionamento mínimo; F2 consolida instalação e ativação; F3 amplia gestão; F4 altera a interface onde houver benefício demonstrado.
 
 | ID | Fase | Entregável verificável | Responsável principal | Condição de conclusão |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | E01 | F0 | Inventário de clientes e perfis: SyssVoIP/versão/módulos, Windows, rede, headsets, filas e integrações | UPP + fornecedor da central | Matriz preenchida, contatos técnicos, ambiente de testes e documentação de integração disponíveis |
 | E02 | F0 | Arquitetura, esquema de configuração, contrato de estados e levantamento de licenças | Engenharia + responsável por licenciamento | Decisões registradas e impedimentos conhecidos; requisitos críticos com responsável |
 | E03 | F1 | API e banco mínimos de clientes/usuários/ramais/ativações/dispositivos, com interface administrativa mínima | Backend | RF01–RF06/RF14 básicos aprovados, isolamento entre clientes testado e contrato OpenAPI entregue |
@@ -239,7 +239,7 @@ Comparar o candidato com a versão anterior aprovada sob as mesmas condições, 
 Criar ao menos um perfil representativo para cada combinação relevante de central/versão/configuração, Windows/arquitetura e tipo de rede. Cobrir integralmente combinações críticas e documentar a seleção por risco das demais. Não transformar aprovação em um cliente em garantia para toda a base.
 
 | Dimensão | Variações a inventariar e testar |
-|---|---|
+| --- | --- |
 | Central | PBX Unificado SyssVoIP de cada ambiente/versão/módulo; demais PBXs usados por clientes, se houver |
 | Windows | Versão, edição e build efetivos; x64 e Win32 quando contratados; ARM/emulação, VDI/RDP e versões legadas somente após decisão específica |
 | Implantação | Instalação limpa, atualização de versão anterior, reparo, desinstalação, reinstalação e portátil, se oferecido |
@@ -253,7 +253,7 @@ Criar ao menos um perfil representativo para cada combinação relevante de cent
 ### 8.2. Casos mínimos de teste
 
 | Caso | Procedimento e resultado esperado | Requisitos |
-|---|---|---|
+| --- | --- | --- |
 | T01 | Instalar/reinstalar/atualizar em cada arquitetura; verificar assinatura, dados e uso por usuário comum | RF07–RF10, RN09/RN14 |
 | T02 | Ativar com código válido; repetir com inválido, expirado, revogado, já usado e consumo concorrente | RF03–RF05, RN01–RN06 |
 | T03 | Ativar cliente A e tentar acessar configuração/dispositivo/log do cliente B; repetir entre ambientes | RF01/RF18, RN05/RN06 |
@@ -280,7 +280,7 @@ Quando o perfil exigir um recurso hoje ausente, como TLS ou transferência assis
 ### 8.3. O que significa monitoramento de filas
 
 | Capacidade | Onde acontece | Como comprovar |
-|---|---|---|
+| --- | --- | --- |
 | Registro do ramal | SIP/PBX e softphone | Registro aceito, renovado e encerrado; visibilidade na central |
 | Recebimento de chamada de fila | Distribuição feita pelo PBX; atendimento no app | Chamada chega ao agente correto, com áudio e desfecho no relatório da fila |
 | Presença/BLF | Assinaturas/publicação SIP, quando suportadas | Estados de ramal consistentes; não implica controle de agente |
@@ -294,7 +294,7 @@ Quando o perfil exigir um recurso hoje ausente, como TLS ou transferência assis
 ### 8.4. Roteiro obrigatório de filas por perfil SyssVoIP/PBX
 
 | Caso | Cenário | Evidência de aceite |
-|---|---|---|
+| --- | --- | --- |
 | FQ01 | Agente registrado recebe chamada de fila e atende | Correlação entre identificador da chamada no PBX, ramal, horário, áudio e relatório de atendimento |
 | FQ02 | Agente não atende, recusa, está ocupado ou offline | Reencaminhamento e contabilização conforme estratégia da fila, sem chamada perdida silenciosamente |
 | FQ03 | Agente entra/sai e pausa/retoma | Estado efetivo no PBX; código/API específicos documentados, sem presumir códigos universais |
@@ -334,7 +334,7 @@ Distribuir primeiro à equipe técnica, depois ao grupo piloto e então aos grup
 ### 9.3. Modelo de registro de resultado
 
 | Campo | Preenchimento obrigatório |
-|---|---|
+| --- | --- |
 | Identificação | Caso, requisito, cliente/perfil anonimizado, ambiente, data e executor |
 | Artefato | Versão, commit, arquitetura, hash do `.exe`/instalador, assinatura e revisão da configuração |
 | Ambiente | Windows/build, PBX/versão/módulo, rede, transporte, codecs e headset |
@@ -352,7 +352,7 @@ Distribuir primeiro à equipe técnica, depois ao grupo piloto e então aos grup
 Para este projeto, a proposta é manter o aplicativo derivado sob **GNU GPL versão 3**, conforme o [LICENSE existente](../LICENSE), e contratar implantação, suporte, hospedagem, gestão e SLA em instrumento separado. Não substituir a GPL por contrato UPP que proíba os direitos concedidos sobre o código coberto. Este documento especifica a forma pretendida de distribuição; não altera a licença atual nem declara encerradas as pendências de terceiros.
 
 | Componente | Evidência de licença | Tratamento proposto |
-|---|---|---|
+| --- | --- | --- |
 | MicroSIP 3.22.16 | Site oficial informa GPLv2; cabeçalhos locais, como `AAOptionsDlg.cpp:4`, permitem versão 2 ou posterior | Preservar autoria e registrar a utilização sob GPLv3 no conjunto derivado, sujeita à revisão completa dos componentes |
 | Upphone / alterações UPP | `LICENSE` contém GPLv3; `README.md` declara GPLv3 | Distribuir modificações e avisos de alteração junto ao fonte correspondente |
 | pjproject | Fornecedor oferece GPLv2 ou posterior e alternativa proprietária | Usar a opção compatível com o conjunto GPLv3; inventariar também dependências incorporadas |
@@ -382,7 +382,7 @@ O pacote de fontes não inclui senhas SIP, tokens, bases de clientes ou chaves d
 ### 10.3. Pendências concretas na base examinada
 
 | Pendência | Evidência | Ação exigida antes da liberação comercial aprovada |
-|---|---|---|
+| --- | --- | --- |
 | Declaração de licença divergente | `res/main.rc2:104` ainda identifica GPLv2; `LICENSE`/README declaram GPLv3 | Uniformizar avisos do produto conforme decisão documentada de licenciamento, preservando autoria |
 | Pacotes sem textos/licenças explícitos | `build/Upphone.iss:56` copia somente `.exe`; `build/release.ps1:122` monta portátil com `.exe` | Incluir documentos, avisos e acesso ao fonte correspondente em cada forma de entrega |
 | CMarkup exige permissão para redistribuir fonte | `lib/Markup.h:6` e `lib/Markup.cpp:6`; compilado em `microsip.vcxproj:409` | Localizar autorização escrita compatível, obter permissão suficiente ou substituir o componente em trabalho futuro |
@@ -406,7 +406,7 @@ Caso a UPP deseje distribuir o executável derivado com código fechado, será n
 ## 11. Decisões ainda necessárias e dependências
 
 | Decisão / dependência | Responsável | Momento limite |
-|---|---|---|
+| --- | --- | --- |
 | Instâncias/versões/módulos SyssVoIP e recursos de filas efetivamente contratados | UPP + SyssVoIP | E01, antes de fechar perfil e casos FQ |
 | Documentação oficial de API/eventos, autenticação e limites do fornecedor | Integrações + SyssVoIP | Antes de estimar/implementar E08 |
 | Ramais de teste, fila, tronco e usuários de homologação, com acesso adequado ao monitor da central | Telefonia UPP | Antes de chamadas reais e FQ |

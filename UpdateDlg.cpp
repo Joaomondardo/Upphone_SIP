@@ -21,10 +21,22 @@
 #include "UpdateDlg.h"
 #include "mainDlg.h"
 #include "langpack.h"
+#include "Provisioning/UpdateDownload.h"
 
 // Upphone: "Update Available" notice (see UpdateDlg.h)
 
 UpdateDlg* UpdateDlg::s_open = NULL;
+
+// Upphone: result of the download thread, posted to the notice
+#define UM_UPDATE_DOWNLOADED (WM_APP + 1)
+
+struct UpdateDownloadJob {
+    HWND hwnd;
+    CString url;
+    CString sha256;
+    CString version;
+    Provisioning::UpdateDownloadResult result;
+};
 
 void UpdateDlg::Show(CWnd* pParent, CString version, CString notes, CString url, CString sha256, bool mandatory)
 {
@@ -53,6 +65,24 @@ UpdateDlg::UpdateDlg(CString version, CString notes, CString url, CString sha256
     if (m_url.Left(8).CompareNoCase(_T("https://")) != 0) {
         m_url = _T(_GLOBAL_UPDATES_PAGE);
     }
+    // Upphone: offered version below the installed one, part by part ("1.4.0" < "1.4.1")
+    CString installed = _T(_GLOBAL_VERSION);
+    auto next = [](const CString& text, int& pos) { return pos < 0 ? 0 : _ttoi(text.Tokenize(_T("."), pos)); };
+    int posOffered = 0, posInstalled = 0;
+    for (int i = 0; i < 4; i++) {
+        int offered = next(m_version, posOffered);
+        int current = next(installed, posInstalled);
+        if (offered != current) {
+            m_downgrade = offered < current;
+            break;
+        }
+    }
+}
+
+// Upphone: required (below the minimum), rollback or plain update
+CString UpdateDlg::Title() const
+{
+    return Translate(m_mandatory ? _T("Update Required") : (m_downgrade ? _T("Version Change") : _T("Update Available")));
 }
 
 void UpdateDlg::DoDataExchange(CDataExchange* pDX)
@@ -64,6 +94,10 @@ void UpdateDlg::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(UpdateDlg, CThemeDialog)
     ON_WM_CTLCOLOR()
+    // Upphone: download, check and installer of an update offered by the Upp platform
+    ON_MESSAGE(UM_UPDATE_DOWNLOADED, OnDownloaded)
+    ON_WM_TIMER()
+    ON_WM_DESTROY()
 END_MESSAGE_MAP()
 
 BOOL UpdateDlg::OnInitDialog()
@@ -73,7 +107,8 @@ BOOL UpdateDlg::OnInitDialog()
     TranslateDialog(m_hWnd);
 
     CString caption;
-    caption.Format(_T("%s - %s"), _T(_GLOBAL_NAME_VISIBLE), Translate(_T("Update Available")));
+    // Upphone: the same words as the title (an update below the minimum is required)
+    caption.Format(_T("%s - %s"), _T(_GLOBAL_NAME_VISIBLE), Title().GetString());
     SetWindowText(caption);
 
     LOGFONT lf;
@@ -93,9 +128,10 @@ BOOL UpdateDlg::OnInitDialog()
     icon->SetWindowPos(NULL, 0, 0, iconSize, iconSize, SWP_NOMOVE | SWP_NOZORDER);
     icon->SetIcon(m_hIcon);
 
-    GetDlgItem(IDC_UPDATE_TITLE)->SetWindowText(Translate(m_mandatory ? _T("Update Required") : _T("Update Available")));
+    GetDlgItem(IDC_UPDATE_TITLE)->SetWindowText(Title());
     CString text;
-    text.Format(Translate(_T("Version %s is available. You are using version %s.")), m_version.GetString(), _T(_GLOBAL_VERSION));
+    text.Format(Translate(m_downgrade ? _T("Upp indicated version %s. You are using version %s.")
+        : _T("Version %s is available. You are using version %s.")), m_version.GetString(), _T(_GLOBAL_VERSION));
     GetDlgItem(IDC_UPDATE_TEXT)->SetWindowText(text);
     if (!m_notes.IsEmpty() || !m_sha256.IsEmpty()) {
         CString notes;
@@ -152,14 +188,133 @@ HBRUSH UpdateDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 
 void UpdateDlg::OnOK()
 {
+    if (m_downloading) {
+        return;
+    }
+    // Upphone: a version offered by the Upp platform comes with the SHA-256 of its installer: the app downloads
+    // it, checks it and runs it (specification, RN09). Without it (GitHub release page), the page is opened.
+    if (!m_sha256.IsEmpty()) {
+        if (mainDlg && mainDlg->messagesDlg && mainDlg->messagesDlg->GetCallsCount(true)) {
+            ::MessageBox(m_hWnd, Translate(_T("Finish the call before installing the update.")),
+                _T(_GLOBAL_NAME_VISIBLE), MB_ICONINFORMATION);
+            return;
+        }
+        StartDownload();
+        return;
+    }
     accountSettings.updatesDeclined.Empty();
     accountSettings.GlobalSave();
     MSIP::OpenURL(m_url);
     DestroyWindow();
 }
 
+void UpdateDlg::StartDownload()
+{
+    m_downloading = true;
+    m_ButtonYes.EnableWindow(FALSE);
+    m_ButtonNo.EnableWindow(FALSE);
+    GetDlgItem(IDC_UPDATE_QUESTION)->SetWindowText(Translate(_T("Downloading and checking the update...")));
+    UpdateDownloadJob* job = new UpdateDownloadJob{ m_hWnd, m_url, m_sha256, m_version };
+    if (!AfxBeginThread(DownloadThread, job)) {
+        delete job;
+        m_downloading = false;
+        m_ButtonYes.EnableWindow(TRUE);
+        m_ButtonNo.EnableWindow(TRUE);
+    }
+}
+
+UINT UpdateDlg::DownloadThread(LPVOID param)
+{
+    UpdateDownloadJob* job = (UpdateDownloadJob*)param;
+    job->result = Provisioning::DownloadUpdate(job->url, job->sha256, job->version);
+    // the notice cannot be closed while downloading; if the app was closed, the window no longer exists
+    if (!::PostMessage(job->hwnd, UM_UPDATE_DOWNLOADED, 0, (LPARAM)job)) {
+        delete job;
+    }
+    return 0;
+}
+
+LRESULT UpdateDlg::OnDownloaded(WPARAM wParam, LPARAM lParam)
+{
+    UpdateDownloadJob* job = (UpdateDownloadJob*)lParam;
+    Provisioning::UpdateDownloadResult result = job->result;
+    delete job;
+    m_downloading = false;
+    CString error = result.error;
+    if (result.ok) {
+        if (mainDlg && mainDlg->messagesDlg && mainDlg->messagesDlg->GetCallsCount(true)) {
+            error = Translate(_T("Finish the call before installing the update."));
+        }
+        else if (Provisioning::LaunchUpdate(result.path, m_installer, error)) {
+            accountSettings.updatesDeclined.Empty();
+            accountSettings.GlobalSave();
+            // the installer closes the app; until then the notice waits (Windows asks for the permission now)
+            m_downloading = true;
+            GetDlgItem(IDC_UPDATE_QUESTION)->SetWindowText(Translate(_T("Installing. Confirm the permission of Windows.")));
+            if (!m_installer) {
+                DestroyWindow();
+            }
+            else {
+                SetTimer(UM_UPDATE_DOWNLOADED, 1000, NULL);
+            }
+            return 0;
+        }
+    }
+    m_ButtonYes.EnableWindow(TRUE);
+    m_ButtonNo.EnableWindow(TRUE);
+    GetDlgItem(IDC_UPDATE_QUESTION)->SetWindowText(Translate(_T("Do you want to download it now?")));
+    if (!result.ok) {
+        // the page in the browser is the way left; the check code stays in the notice
+        CString text;
+        text.Format(_T("%s\r\n\r\n%s"), error.GetString(), Translate(_T("Open the download page in the browser?")));
+        if (::MessageBox(m_hWnd, text, _T(_GLOBAL_NAME_VISIBLE), MB_YESNO | MB_ICONWARNING) == IDYES) {
+            MSIP::OpenURL(m_url);
+        }
+    }
+    else {
+        ::MessageBox(m_hWnd, error, _T(_GLOBAL_NAME_VISIBLE), MB_ICONWARNING);
+    }
+    return 0;
+}
+
+void UpdateDlg::OnTimer(UINT_PTR nIDEvent)
+{
+    if (nIDEvent != UM_UPDATE_DOWNLOADED || !m_installer || WaitForSingleObject(m_installer, 0) != WAIT_OBJECT_0) {
+        CThemeDialog::OnTimer(nIDEvent);
+        return;
+    }
+    KillTimer(nIDEvent);
+    DWORD code = 0;
+    GetExitCodeProcess(m_installer, &code);
+    CloseHandle(m_installer);
+    m_installer = NULL;
+    m_downloading = false;
+    CString failure = Provisioning::InstallerFailure(code);
+    if (failure.IsEmpty()) {
+        DestroyWindow();
+        return;
+    }
+    m_ButtonYes.EnableWindow(TRUE);
+    m_ButtonNo.EnableWindow(TRUE);
+    GetDlgItem(IDC_UPDATE_QUESTION)->SetWindowText(Translate(_T("Do you want to download it now?")));
+    ::MessageBox(m_hWnd, failure, _T(_GLOBAL_NAME_VISIBLE), MB_ICONWARNING);
+}
+
+void UpdateDlg::OnDestroy()
+{
+    if (m_installer) {
+        KillTimer(UM_UPDATE_DOWNLOADED);
+        CloseHandle(m_installer);
+        m_installer = NULL;
+    }
+    CThemeDialog::OnDestroy();
+}
+
 void UpdateDlg::OnCancel()
 {
+    if (m_downloading) {
+        return;
+    }
     // "No" (or closing the notice): this version is offered again only by "Check for Updates"; a version below
     // the minimum is always offered again
     if (!m_mandatory) {

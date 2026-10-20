@@ -146,6 +146,57 @@ static void on_reg_state2(pjsua_acc_id acc_id, pjsua_reg_info* info)
     PostMessage(mainDlg->m_hWnd, UM_ON_REG_STATE2, (WPARAM)info->cbparam->code, (LPARAM)str);
 }
 
+// Upphone: a TLS connection to the PBX closed because its certificate was refused (untrusted, other name...)
+// or because the TLS negotiation failed (old TLS version, no common cipher)
+#ifndef PJ_SSL_ERRNO_START
+#define PJ_SSL_ERRNO_START (PJ_ERRNO_START_USER + PJ_ERRNO_SPACE_SIZE * 6) // as documented in pj/errno.h
+#endif
+static void on_transport_state(pjsip_transport* tp, pjsip_transport_state state, const pjsip_transport_state_info* info)
+{
+    if (state != PJSIP_TP_STATE_DISCONNECTED || !info || !tp || !(tp->flag & PJSIP_TRANSPORT_SECURE)
+        || !IsWindow(mainDlg->m_hWnd)) {
+        return;
+    }
+    const pjsip_tls_state_info* tls = (const pjsip_tls_state_info*)info->ext_info;
+    if (info->status == PJSIP_TLS_ECERTVERIF && tls) {
+        PostMessage(mainDlg->m_hWnd, UM_TLS_CERT_ERROR, (WPARAM)(tls->ssl_sock_info ? tls->ssl_sock_info->verify_status : 0), 0);
+    }
+    // the handshake did not finish: the PBX closed it (alert) or Schannel refused it; a PBX that is down
+    // (connection refused, timeout) keeps the usual message
+    else if (tls && tls->ssl_sock_info && !tls->ssl_sock_info->established
+        && (info->status == PJ_EEOF
+            || (info->status >= PJ_SSL_ERRNO_START && info->status < PJ_SSL_ERRNO_START + PJ_ERRNO_SPACE_SIZE))) {
+        PostMessage(mainDlg->m_hWnd, UM_TLS_CERT_ERROR, 0, (LPARAM)info->status);
+    }
+}
+
+LRESULT CmainDlg::OnTlsCertError(WPARAM wParam, LPARAM lParam)
+{
+    if (lParam) {
+        char reason[PJ_ERR_MSG_SIZE];
+        pj_strerror((pj_status_t)lParam, reason, sizeof(reason));
+        PJ_LOG(1, (THIS_FILENAME, "TLS negotiation with the PBX failed: %s", reason));
+        m_tlsError = Translate(_T("TLS negotiation with the PBX failed"));
+        m_tlsErrorFresh = true;
+        UpdateWindowText(m_tlsError, IDI_OFFLINE, true);
+        return 0;
+    }
+    unsigned verify = (unsigned)wParam;
+    const char* reasons[8];
+    unsigned count = PJ_ARRAY_SIZE(reasons);
+    pj_ssl_cert_get_verify_status_strings(verify, reasons, &count);
+    CString detail;
+    for (unsigned i = 0; i < count; i++) {
+        detail.AppendFormat(_T("%s%s"), i ? _T("; ") : _T(""), CString(reasons[i]));
+    }
+    PJ_LOG(1, (THIS_FILENAME, "PBX certificate refused (0x%x): %s", verify, CT2A(detail).m_psz));
+    m_tlsError = Translate((verify & PJ_SSL_CERT_EIDENTITY_NOT_MATCH)
+        ? _T("PBX certificate does not match its address") : _T("PBX certificate not trusted"));
+    m_tlsErrorFresh = true;
+    UpdateWindowText(m_tlsError, IDI_OFFLINE, true);
+    return 0;
+}
+
 LRESULT CmainDlg::onRegState2(WPARAM wParam, LPARAM lParam)
 {
     int code = wParam;
@@ -156,6 +207,12 @@ LRESULT CmainDlg::onRegState2(WPARAM wParam, LPARAM lParam)
         delete str;
     }
 
+    // Upphone: the TLS failure is reported (UM_TLS_CERT_ERROR) just before the registration failure it causes,
+    // from the same thread; a failure without a new TLS report (PBX down, fixed...) clears the TLS message
+    if (code == 200 || !m_tlsErrorFresh) {
+        m_tlsError.Empty();
+    }
+    m_tlsErrorFresh = false;
     if (code == 200) {
         Subscribe();
         if (accountSettings.usersDirectory.Find(_T("%s")) != -1 || accountSettings.usersDirectory.Find(_T("{")) != -1) {
@@ -1846,6 +1903,7 @@ BEGIN_MESSAGE_MAP(CmainDlg, CBaseDialog)
     ON_MESSAGE(UM_PROVISIONING_RESULT, OnProvisioningResult)
     ON_MESSAGE(UM_PROVISIONING_DEPROVISIONED, OnProvisioningDeprovisioned)
     ON_MESSAGE(UM_PROVISIONING_UPDATE, OnProvisioningUpdate)
+    ON_MESSAGE(UM_TLS_CERT_ERROR, OnTlsCertError) // Upphone
     ON_COMMAND(ID_SETTINGS, OnMenuSettings)
     ON_COMMAND(ID_SHORTCUTS, OnMenuShortcuts)
     ON_COMMAND(ID_ALWAYS_ON_TOP, OnMenuAlwaysOnTop)
@@ -3384,6 +3442,7 @@ void CmainDlg::PJCreateRaw()
 
     ua_cfg.cb.on_reg_started2 = &on_reg_started2;
     ua_cfg.cb.on_reg_state2 = &on_reg_state2;
+    ua_cfg.cb.on_transport_state = &on_transport_state; // Upphone
     ua_cfg.cb.on_call_state = &on_call_state;
     ua_cfg.cb.on_dtmf_digit = &on_dtmf_digit;
     ua_cfg.cb.on_call_tsx_state = &on_call_tsx_state;
@@ -3581,6 +3640,9 @@ void CmainDlg::PJCreateRaw()
             pjsua_transport_create(PJSIP_TRANSPORT_TCP, &cfg, &transport_tcp);
         }
         cfg.port = MACRO_ENABLE_LOCAL_ACCOUNT ? 5061 : 0;
+        // Upphone: the PBX certificate is checked (Windows trust store and PBX name), TLS 1.2 or newer only
+        cfg.tls_setting.verify_server = PJ_TRUE;
+        cfg.tls_setting.proto = PJ_SSL_SOCK_PROTO_TLS1_2 | PJ_SSL_SOCK_PROTO_TLS1_3;
         status = pjsua_transport_create(PJSIP_TRANSPORT_TLS, &cfg, &transport_tls);
         if (status != PJ_SUCCESS && cfg.port) {
             cfg.port = 0;
@@ -3921,6 +3983,10 @@ void CmainDlg::PJAccountConfig(pjsua_acc_config * acc_cfg, Account * account)
     else {
         acc_cfg->use_srtp = PJMEDIA_SRTP_DISABLED;
     }
+    // Upphone: on a TLS account the SRTP keys only go over TLS
+    if (account->transport == _T("tls")) {
+        acc_cfg->srtp_secure_signaling = 1;
+    }
     if (!accountSettings.enableSTUN || accountSettings.stun.IsEmpty()) {
         acc_cfg->rtp_cfg.public_addr = MSIP::StrToPjStr(get_public_addr(account));
     }
@@ -4038,6 +4104,14 @@ void CmainDlg::PJAccountAddRaw()
     SetPaneText2(accountSettings.account.username);
     SetWindowText(title);
     pageDialer->SetName();
+
+    // Upphone: an account set to TLS or TCP is not registered over UDP when that transport could not be created
+    if ((accountSettings.account.transport == _T("tls") && transport_tls == -1)
+        || (accountSettings.account.transport == _T("tcp") && transport_tcp == -1)) {
+        PJ_LOG(1, (THIS_FILENAME, "Transport %s not available, account not registered", accountSettings.account.transport == _T("tls") ? "TLS" : "TCP"));
+        UpdateWindowText(Translate(_T("Connection Failed")), IDI_OFFLINE, true);
+        return;
+    }
 
     pjsua_acc_config acc_cfg;
     PJAccountConfig(&acc_cfg, &accountSettings.account);
@@ -4276,6 +4350,11 @@ void CmainDlg::UpdateWindowText(CString text, int icon, bool afterRegister)
                             BaloonPopup(_T(""), str);
                         }
                     }
+                }
+                else if (!m_tlsError.IsEmpty()) {
+                    // Upphone: the registration failed because the PBX certificate was refused
+                    icon = IDI_OFFLINE;
+                    str = m_tlsError;
                 }
                 else {
                     if (info.status == 502) {
@@ -6100,6 +6179,14 @@ void CmainDlg::CheckUpdates()
 // Upphone: once per updatesInterval, at start and then on the hourly IDT_TIMER_UPDATES while the app stays open
 void CmainDlg::CheckUpdatesIfDue()
 {
+    // Upphone: below the minimum version accepted by the Upp platform the notice comes at every start and every hour,
+    // whatever the interval chosen by the user (also "never"), except during a call
+    if (provisioning.IsProvisioned() && ProvisionedBelowMinimum()) {
+        if (!(messagesDlg && messagesDlg->GetCallsCount())) {
+            ShowProvisionedUpdate(false);
+        }
+        return;
+    }
     if (accountSettings.updatesInterval == _T("never")) {
         return;
     }
@@ -6264,6 +6351,15 @@ static CString OfferString(const Json::Value& offer, const char* key)
 
 // Upphone: version offered by the Upp platform to a provisioned computer. It may be lower than the installed one
 // when the Upp pinned a version for the client (controlled rollback); below the minimum the notice always appears.
+bool CmainDlg::ProvisionedBelowMinimum()
+{
+    CString minimum = OfferString(provisioning.UpdateOffer(), "min_version");
+    int current[4];
+    int lowest[4];
+    UpdateParseVersion(_T(_GLOBAL_VERSION), current);
+    return !minimum.IsEmpty() && UpdateParseVersion(minimum, lowest) && UpdateCompareVersions(current, lowest) < 0;
+}
+
 void CmainDlg::ShowProvisionedUpdate(bool manual)
 {
     const Json::Value& offer = provisioning.UpdateOffer();
@@ -6312,7 +6408,9 @@ LRESULT CmainDlg::OnProvisioningDeprovisioned(WPARAM wParam, LPARAM lParam)
     CString* message = (CString*)lParam;
     MyAccountDlg::CloseIfOpen();
     UpdateWindowText();
-    ActivationDlg::Show(this, message ? *message : CString());
+    // Upphone: a code left by the installer (reinstallation in a computer already activated) comes filled in, but
+    // waits for "Activate": the person has just left the account
+    ActivationDlg::Show(this, message ? *message : CString(), provisioning.PendingCode(), false);
     delete message;
     return 0;
 }

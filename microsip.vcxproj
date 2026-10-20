@@ -440,6 +440,7 @@
     <ClCompile Include="Provisioning\Provisioning.cpp" />
     <ClCompile Include="Provisioning\ProvisioningHttp.cpp" />
     <ClCompile Include="Provisioning\ProvisioningSupport.cpp" />
+    <ClCompile Include="Provisioning\UpdateDownload.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AAOptionsDlg.h" />
@@ -517,6 +518,7 @@
     <ClInclude Include="Provisioning\Provisioning.h" />
     <ClInclude Include="Provisioning\ProvisioningHttp.h" />
     <ClInclude Include="Provisioning\ProvisioningSupport.h" />
+    <ClInclude Include="Provisioning\UpdateDownload.h" />
     <ClInclude Include="Utils\StringConverter.h" />
   </ItemGroup>
   <ItemGroup>

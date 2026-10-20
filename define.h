@@ -80,6 +80,10 @@
 #define _GLOBAL_PROVISIONING_PROD "https://provisionamento.upphone.com.br"
 #define _GLOBAL_PROVISIONING_HOMOLOG "https://homolog.provisionamento.upphone.com.br"
 #define _GLOBAL_TECH_DETAILS
+// Upphone: name of the publisher in the code signing certificate of the installers (CERT_NAME_SIMPLE_DISPLAY_TYPE).
+// Empty while the Upp has no certificate: the app accepts an unsigned installer only when its SHA-256 matches the
+// one of the platform. Filled, the update is installed only when signed by this publisher (Provisioning/UpdateDownload).
+#define _GLOBAL_UPDATE_PUBLISHER ""
 
 #define _GLOBAL_EC_DEFAULT "1"
 

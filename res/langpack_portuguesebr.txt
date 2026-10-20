@@ -496,6 +496,18 @@ Ocultar identificador de chamadas
 Códigos de recursos
 [Connection Failed]
 Falha na conexão
+[Symmetric NAT detected!]
+NAT simétrico detectado!
+[Final]
+Final
+[Diversion]
+Desviada de
+[PBX certificate not trusted]
+Certificado não confiável
+[PBX certificate does not match its address]
+Certificado não confere
+[TLS negotiation with the PBX failed]
+Falha no TLS da central
 [The server returned an error code:]
 O servidor retornou um código de erro:
 [The received data cannot be recognized]
@@ -740,7 +752,7 @@ Chamada de teste
 [Send diagnostics]
 Enviar diagnóstico
 [Reload settings]
-Recarregar configuração
+Recarregar
 [Close]
 Fechar
 [Choose the microphone and the speaker used in calls. Speak to see the level of the microphone.]
@@ -781,5 +793,17 @@ Você já está usando a versão indicada pela Upp.
 Ative o Upphone SIP com o código enviado pela Upp.
 [Update Required]
 Atualização necessária
+[Version Change]
+Troca de versão
+[Upp indicated version %s. You are using version %s.]
+A Upp indicou a versão %s. Você está usando a versão %s.
+[Finish the call before installing the update.]
+Encerre a chamada antes de instalar a atualização.
+[Installing. Confirm the permission of Windows.]
+Instalando. Confirme a permissão do Windows.
+[Downloading and checking the update...]
+Baixando e conferindo a atualização...
+[Open the download page in the browser?]
+Abrir a página de download no navegador?
 [Installer check code (SHA-256):]
 Código de verificação do instalador (SHA-256):

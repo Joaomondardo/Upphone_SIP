@@ -41,11 +41,22 @@ protected:
 	CString m_url;
 	CString m_sha256;
 	bool m_mandatory = false;
+	bool m_downgrade = false; // Upphone: a lower version pinned by the Upp platform (authorized rollback)
+	CString Title() const;
 	CFont m_fontTitle;
 	CFont m_fontQuestion;
 	HICON m_hIcon = NULL;
 	CButtonEx m_ButtonYes;
 	CButtonEx m_ButtonNo;
+	// Upphone: installer of the Upp platform being downloaded and checked (Provisioning/UpdateDownload)
+	bool m_downloading = false;
+	void StartDownload();
+	static UINT DownloadThread(LPVOID param);
+	afx_msg LRESULT OnDownloaded(WPARAM wParam, LPARAM lParam);
+	// the installer started by the app: when it ends with the app still open, the update did not happen
+	HANDLE m_installer = NULL;
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	afx_msg void OnDestroy();
 
 	virtual void DoDataExchange(CDataExchange* pDX);
 	virtual BOOL OnInitDialog();
