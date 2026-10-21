@@ -36,3 +36,7 @@ provisioning.dat
 provisioning.dat.tmp
 provisioning.dat.prev
 provisioning_log.txt.*
+
+# Indices locais Graphify (regeneraveis)
+/graphify-out/
+/.graphify/
