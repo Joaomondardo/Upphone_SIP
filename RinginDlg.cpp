@@ -21,7 +21,7 @@
 #include "langpack.h"
 #include "mainDlg.h"
 #include "settings.h"
-#include "Markup.h"
+// Upphone: Markup.h removed (CMarkup was not used here)
 
 #include <vector>
 #include <algorithm>

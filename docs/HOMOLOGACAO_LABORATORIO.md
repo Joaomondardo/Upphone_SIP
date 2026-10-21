@@ -17,16 +17,16 @@ Registro no formato da seção 9.3 da [especificação](ESPECIFICACAO_SOFTPHONE_
 
 ## Artefatos
 
-Versão 1.4.0, MicroSIP 3.22.16 Lite, pjproject `bd69054a` (2.17-dev, TLS pelo Schannel do Windows desde 20/10 à tarde, com o patch `build/pjproject/schannel-rand-bytes.patch`), branch `provisionamento` commit `d66918b` (as fontes destes artefatos, com as correções abaixo). Não assinados (o certificado da Upp não existe ainda).
+Versão 1.4.0, MicroSIP 3.22.16 Lite, pjproject `bd69054a` (2.17-dev, TLS pelo Schannel do Windows desde 20/10 à tarde, com o patch `build/pjproject/schannel-rand-bytes.patch`), branch `provisionamento` sobre o commit `a34402f`, com as alterações de D15 e D16 ainda não commitadas. Não assinados (o certificado da Upp não existe ainda).
 
 | Arquivo | SHA-256 | Bytes |
 | --- | --- | --- |
-| `x64/Upphone.exe` | `665803bb852c7fdf2d6ce2706c128fdd354958b35e1fe9e08d81b1a9e76d5d0f` | 7.640.576 |
-| `Win32/Upphone.exe` | `0144bff904c7c1938b473aa5147561085a650541a99651d138cd08cb96cb31f4` | 6.353.408 |
-| `Upphone-SIP-1.4.0-x64-setup.exe` | `18ca111c57a4f75125f8ff9baa215f8c9afad11adb6595811dcebfe0248be131` | 4.978.190 |
-| `Upphone-SIP-1.4.0-Win32-setup.exe` | `a15e9351527da8c460bead68c918d0a7eada4d387f68697c348e63f4e5a8f222` | 4.561.280 |
+| `x64/Upphone.exe` | `ed945965e88413d14be22d7cad4d7f86b6b90d3f110fdab13e9f48418f89956f` | 7.655.424 |
+| `Win32/Upphone.exe` | `2f000d84c2e3454d228091ff7ce858807879f9a12ea6390ad0b8c0c1b9bd509d` | 6.326.272 |
+| `Upphone-SIP-1.4.0-x64-setup.exe` | `8d7f12f912f8eeee5fe9f0757caf36dbd84649ebf7e2f8d8f20c49e19eee9097` | 4.980.679 |
+| `Upphone-SIP-1.4.0-Win32-setup.exe` | `26bf07150d14d0188dfed2d7c809e2d9f52cd7c99865ddfa21dce7574dd49982` | 4.556.127 |
 
-Hashes da compilação final (20/10, com TLS, as correções até D14 e os textos de TLS e de reversão). O Win32 desta compilação foi o instalado na segunda rodada de TLS da VM (executável conferido pelo hash); a primeira rodada, em x64, usou a compilação anterior, sem os textos de "Falha no TLS da central" e "Troca de versão" (`Upphone.exe` x64 `9f746c34…0caf65`). A compilação anterior, sem TLS e com as correções até D11, tinha o `Upphone.exe` x64 `c8841bd3…02218d1` e o Win32 `3a4c5c02…677e1`. Os ensaios rodaram em compilações sucessivas do mesmo código-fonte, cada uma com as correções conhecidas até ali: a rodada da VM de 19/10 antes de D5 e D6, a rodada do notebook a partir do T13 com D5 e D6, e a rodada da VM de 20/10 com D5–D8 (D9–D11 corrigidos e conferidos nela mesma). Para testar a atualização e a reversão foi gerada uma 1.4.1 de teste do mesmo código. Qualquer nova compilação precisa de identificação própria (seção 8.1).
+Hashes da compilação final (20/10 à noite, sem CMarkup/MessageBoxX e com as correções até D16). Os testes do XML na VM usaram o Win32 do mesmo código, compilado antes da última mudança do `AVISOS.txt` (`Upphone.exe` `688d23c0…`). A compilação da rodada de TLS (correções até D14) tinha o `Upphone.exe` x64 `665803bb…5d0f` e o Win32 `0144bff9…31f4`, este instalado na segunda rodada de TLS da VM; a primeira rodada, em x64, usou a compilação anterior, sem os textos de "Falha no TLS da central" e "Troca de versão" (`Upphone.exe` x64 `9f746c34…0caf65`). A compilação anterior, sem TLS e com as correções até D11, tinha o `Upphone.exe` x64 `c8841bd3…02218d1` e o Win32 `3a4c5c02…677e1`. Os ensaios rodaram em compilações sucessivas do mesmo código-fonte, cada uma com as correções conhecidas até ali: a rodada da VM de 19/10 antes de D5 e D6, a rodada do notebook a partir do T13 com D5 e D6, e a rodada da VM de 20/10 com D5–D8 (D9–D11 corrigidos e conferidos nela mesma). Para testar a atualização e a reversão foi gerada uma 1.4.1 de teste do mesmo código. Qualquer nova compilação precisa de identificação própria (seção 8.1).
 
 ## Resultados por caso
 
@@ -69,6 +69,12 @@ Hashes da compilação final (20/10, com TLS, as correções até D14 e os texto
 | D12 | (Revisão, com o TLS) o MicroSIP criava o transporte TLS sem conferir o certificado da central (`verify_server` desligado): qualquer um no caminho poderia se passar pela central | Certificado conferido pela cadeia do Windows e pelo nome da central; só TLS 1.2 ou mais novo |
 | D13 | (Revisão) conta configurada para TLS ou TCP se registrava em UDP, sem aviso, se esse transporte não pudesse ser criado | A conta não é registrada ("Falha na conexão") |
 | D14 | (Revisão) chaves SRTP geradas com `pj_rand()` e o relógio, previsíveis: o Schannel do pjproject não implementa `pj_ssl_rand_bytes` (já era assim no build sem SSL) | Patch no pjproject fixado: `pj_ssl_rand_bytes` com `BCryptGenRandom`; aplicado pelo `build.ps1` |
+| D15 | (Revisão) o CMarkup entrava em laço infinito com `< ?` ou `< !` (espaço depois do `<`) e o app congelava: bastava uma agenda remota ou um `Contacts.xml` assim | CMarkup e MessageBoxX retirados (licença); XML lido e gravado por `Utils/Xml.cpp`, próprio |
+| D16 | (Revisão) `Contacts.xml` gravado na página de código ANSI e lido como UTF-8 (`MSIP::Utf8EncodeUni` usava `pj_unicode_to_ansi`): os acentos viravam `�` na abertura seguinte e o que não cabe no ANSI (日本, emoji) virava `?` | `Utf8EncodeUni` em UTF-8 de verdade; um `Contacts.xml` antigo em ANSI é lido como ANSI e regravado em UTF-8 |
+
+## Troca do CMarkup (`Utils/Xml`)
+
+Teste comparativo (programa de teste com o CMarkup do commit `a34402f` e o código novo, os dois com o código do app nos quatro pontos de uso): 134 arquivos escritos à mão (os três formatos da agenda remota, casos-limite e malformados) dão o mesmo resultado, exceto 5 de propósito (`>` dentro de aspas, que o CMarkup recusava; aspa não fechada e tag `<>`, que o CMarkup lia como lista parcial ou vazia). Gravação: 2.000 listas aleatórias com o documento idêntico byte a byte e a mesma releitura. 30.000 documentos estragados ao acaso: 97,7% com o mesmo resultado; as diferenças são dessas três categorias e de documentos com várias corrupções; o CMarkup travou em 6, o novo terminou todos. Na VM (Win32): `Contacts.xml` gravado pelo CMarkup com acentos, `&`, aspas, quebras de linha e controles lido e regravado com a agenda Yealink por HTTPS, e o resultado lido igual pelo leitor antigo (reversão para a 1.3.1); `Contacts.xml` antigo em ANSI recuperado e regravado em UTF-8, relido sem perdas; agenda com `< ?xml` recusada sem travar.
 
 ## Observações e limites conhecidos
 
@@ -76,6 +82,7 @@ Hashes da compilação final (20/10, com TLS, as correções até D14 e os texto
 - Com bloqueio feito com o app fechado, o ramal registra por cerca de 2 s ao abrir, até o primeiro contato com a Upp. Para impedir chamadas de fato, a senha precisa ser trocada na central (o painel avisa).
 - O pjproject deste build não grava as mensagens SIP completas no log detalhado (só avisos e estatísticas).
 - Instalação silenciosa feita por outra conta ou sessão (ferramenta da TI) termina com código 5 se o Upphone estiver aberto na sessão do usuário: fechar o app antes.
+- Os nomes de exibição enviados no SIP passam pela mesma conversão ANSI do pjproject (`MSIP::WideCharToPjStr`): um nome com acento sai em ANSI, e não em UTF-8, nas mensagens SIP. Não foi alterado (afeta a telefonia): conferir com a central real.
 - TLS da central: o certificado precisa ser de uma CA confiável no Windows (pública, ou a CA da empresa distribuída pela TI) e conter o nome usado no perfil (SubjectAltName; para IP, um SAN de IP). Certificado curinga (`*.dominio`) é recusado, como pede o RFC 5922. DTLS-SRTP não está disponível (exige OpenSSL): o SRTP usa chaves no SDP (SDES), protegidas pelo TLS; numa conta TLS o app só manda as chaves por TLS.
 - O app abre uma porta TLS de escuta (como já fazia com TCP). Se alguém se conectar a ela, o Schannel cria um certificado autoassinado para essa conexão; a central normalmente reaproveita a conexão aberta pelo app.
 - Central só com TLS 1.0/1.1, ou sem cifra em comum, aparece como "Falha no TLS da central"; uma central fora do ar continua como "Serviço indisponível".

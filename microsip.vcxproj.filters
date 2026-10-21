@@ -40,6 +40,9 @@
     <Filter Include="Header Files\Provisioning">
       <UniqueIdentifier>{3b8f1d2e-6a4c-4e2b-9f71-2c5d8e0a4b13}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Utils">
+      <UniqueIdentifier>{a33c3572-3215-447d-a43f-077d8d9de51d}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Source Files\Provisioning">
       <UniqueIdentifier>{c7e2a9d4-1f35-4b8e-a062-9d4e3b7f1c28}</UniqueIdentifier>
     </Filter>
@@ -144,9 +147,6 @@
     <ClCompile Include="StatusBar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="lib\Markup.cpp">
-      <Filter>Source Files\lib</Filter>
-    </ClCompile>
     <ClCompile Include="lib\Crypto.cpp">
       <Filter>Source Files\lib</Filter>
     </ClCompile>
@@ -178,9 +178,6 @@
       <Filter>Source Files\lib</Filter>
     </ClCompile>
     <ClCompile Include="lib\langpack.cpp">
-      <Filter>Source Files\lib</Filter>
-    </ClCompile>
-    <ClCompile Include="lib\MessageBoxX.cpp">
       <Filter>Source Files\lib</Filter>
     </ClCompile>
     <ClCompile Include="lib\Hid.cpp">
@@ -233,6 +230,9 @@
     </ClCompile>
     <ClCompile Include="Service\ContactsService.cpp">
       <Filter>Source Files\Service</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils\Xml.cpp">
+      <Filter>Source Files\Utils</Filter>
     </ClCompile>
     <ClCompile Include="Data\ContactsRepository.cpp">
       <Filter>Source Files\Data</Filter>
@@ -353,9 +353,6 @@
     <ClInclude Include="StatusBar.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="lib\Markup.h">
-      <Filter>Header Files\lib</Filter>
-    </ClInclude>
     <ClInclude Include="lib\Crypto.h">
       <Filter>Header Files\lib</Filter>
     </ClInclude>
@@ -390,9 +387,6 @@
       <Filter>Header Files\lib</Filter>
     </ClInclude>
     <ClInclude Include="lib\ggets.h">
-      <Filter>Header Files\lib</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\MessageBoxX.h">
       <Filter>Header Files\lib</Filter>
     </ClInclude>
     <ClInclude Include="lib\Hid.h">
@@ -450,6 +444,9 @@
       <Filter>Header Files\Data</Filter>
     </ClInclude>
     <ClInclude Include="Utils\StringConverter.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\Xml.h">
       <Filter>Header Files\Utils</Filter>
     </ClInclude>
     <ClInclude Include="Domain\Contact.h">

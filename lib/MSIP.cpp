@@ -403,10 +403,17 @@ CString MSIP::Utf8DecodeUni(const char* str)
 
 CStringA MSIP::Utf8EncodeUni(const CString& str)
 {
+    // Upphone: really UTF-8. WideCharToPjStr uses the ANSI code page of Windows (pj_unicode_to_ansi of the
+    // pjproject), so Contacts.xml, URL parameters and JSON got "Jo\xE3o" and lost what is not in that code page
     CStringA res;
-    char* msg = WideCharToPjStr(str);
-    res = msg;
-    free(msg);
+    if (str.IsEmpty()) {
+        return res;
+    }
+    int len = WideCharToMultiByte(CP_UTF8, 0, str, str.GetLength(), nullptr, 0, nullptr, nullptr);
+    if (len > 0) {
+        WideCharToMultiByte(CP_UTF8, 0, str, str.GetLength(), res.GetBuffer(len), len, nullptr, nullptr);
+        res.ReleaseBuffer(len);
+    }
     return res;
 }
 

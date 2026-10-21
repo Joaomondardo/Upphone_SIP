@@ -28,7 +28,7 @@
 #include "global.h"
 #include "ModelessMessageBox.h"
 #include "json.h"
-#include "Markup.h"
+#include "Utils/Xml.h" // Upphone: in place of CMarkup (Markup.h), whose license does not allow distributing its source
 #include "langpack.h"
 #include "jumplist.h"
 #include "atlenc.h"
@@ -5848,85 +5848,90 @@ LRESULT CmainDlg::onUsersDirectoryLoaded(WPARAM wParam, LPARAM lParam)
                 else {
                     // XML
                     //PJ_LOG(3, (THIS_FILENAME, "XML foramt detected"));
-                    CMarkup xml;
-                    BOOL bResult = xml.SetDoc(MSIP::Utf8DecodeUni(response->body));
+                    // Upphone: Utils/Xml reads the document as CMarkup did (see Utils/Xml.h)
+                    Xml::Element xml;
+                    CString xmlError;
+                    BOOL bResult = Xml::Parse(MSIP::Utf8DecodeUni(response->body), xml, &xmlError);
+                    if (!bResult) {
+                        PJ_LOG(2, (THIS_FILENAME, "Users directory refused, XML not valid: %s", CT2A(xmlError).m_psz));
+                    }
                     if (bResult) {
                         ok = true;
-                        if (xml.FindElem(_T("contacts"))) {
-                            if (xml.FindAttrib(_T("refresh"))) {
-                                usersDirectoryRefresh = _wtoi(xml.GetAttrib(_T("refresh")));
+                        if (xml.name == _T("contacts")) {
+                            if (xml.Attribute(_T("refresh"))) {
+                                usersDirectoryRefresh = _wtoi(xml.AttributeValue(_T("refresh")));
                             }
-                            if (xml.FindAttrib(_T("silent"))) {
-                                usersDirectorySilent = _wtoi(xml.GetAttrib(_T("silent")));
+                            if (xml.Attribute(_T("silent"))) {
+                                usersDirectorySilent = _wtoi(xml.AttributeValue(_T("silent")));
                             }
-                            while (xml.FindChildElem(_T("contact"))) {
-                                xml.IntoElem();
+                            for (int pos = xml.NextChild(-1, _T("contact")); pos != -1; pos = xml.NextChild(pos, _T("contact"))) {
+                                const Xml::Element& item = xml.children[pos];
                                 contactWithFields = new ContactWithFields();
                                 contactWithFields->contact.directory = true;
-                                if (xml.FindAttrib(_T("name"))) {
+                                if (item.Attribute(_T("name"))) {
                                     contactWithFields->fields.AddTail(_T("name"));
-                                    contactWithFields->contact.name = xml.GetAttrib(_T("name"));
+                                    contactWithFields->contact.name = item.AttributeValue(_T("name"));
                                 }
-                                if (xml.FindAttrib(_T("number"))) {
+                                if (item.Attribute(_T("number"))) {
                                     contactWithFields->fields.AddTail(_T("number"));
-                                    contactWithFields->contact.number = xml.GetAttrib(_T("number"));
+                                    contactWithFields->contact.number = item.AttributeValue(_T("number"));
                                 }
-                                if (xml.FindAttrib(_T("firstname"))) {
+                                if (item.Attribute(_T("firstname"))) {
                                     contactWithFields->fields.AddTail(_T("firstname"));
-                                    contactWithFields->contact.firstname = xml.GetAttrib(_T("firstname"));
+                                    contactWithFields->contact.firstname = item.AttributeValue(_T("firstname"));
                                 }
-                                if (xml.FindAttrib(_T("lastname"))) {
+                                if (item.Attribute(_T("lastname"))) {
                                     contactWithFields->fields.AddTail(_T("lastname"));
-                                    contactWithFields->contact.lastname = xml.GetAttrib(_T("lastname"));
+                                    contactWithFields->contact.lastname = item.AttributeValue(_T("lastname"));
                                 }
-                                if (xml.FindAttrib(_T("phone"))) {
+                                if (item.Attribute(_T("phone"))) {
                                     contactWithFields->fields.AddTail(_T("phone"));
-                                    contactWithFields->contact.phone = xml.GetAttrib(_T("phone"));
+                                    contactWithFields->contact.phone = item.AttributeValue(_T("phone"));
                                 }
-                                if (xml.FindAttrib(_T("mobile"))) {
+                                if (item.Attribute(_T("mobile"))) {
                                     contactWithFields->fields.AddTail(_T("mobile"));
-                                    contactWithFields->contact.mobile = xml.GetAttrib(_T("mobile"));
+                                    contactWithFields->contact.mobile = item.AttributeValue(_T("mobile"));
                                 }
-                                if (xml.FindAttrib(_T("email"))) {
+                                if (item.Attribute(_T("email"))) {
                                     contactWithFields->fields.AddTail(_T("email"));
-                                    contactWithFields->contact.email = xml.GetAttrib(_T("email"));
+                                    contactWithFields->contact.email = item.AttributeValue(_T("email"));
                                 }
-                                if (xml.FindAttrib(_T("address"))) {
+                                if (item.Attribute(_T("address"))) {
                                     contactWithFields->fields.AddTail(_T("address"));
-                                    contactWithFields->contact.address = xml.GetAttrib(_T("address"));
+                                    contactWithFields->contact.address = item.AttributeValue(_T("address"));
                                 }
-                                if (xml.FindAttrib(_T("city"))) {
+                                if (item.Attribute(_T("city"))) {
                                     contactWithFields->fields.AddTail(_T("city"));
-                                    contactWithFields->contact.city = xml.GetAttrib(_T("city"));
+                                    contactWithFields->contact.city = item.AttributeValue(_T("city"));
                                 }
-                                if (xml.FindAttrib(_T("state"))) {
+                                if (item.Attribute(_T("state"))) {
                                     contactWithFields->fields.AddTail(_T("state"));
-                                    contactWithFields->contact.state = xml.GetAttrib(_T("state"));
+                                    contactWithFields->contact.state = item.AttributeValue(_T("state"));
                                 }
-                                if (xml.FindAttrib(_T("zip"))) {
+                                if (item.Attribute(_T("zip"))) {
                                     contactWithFields->fields.AddTail(_T("zip"));
-                                    contactWithFields->contact.zip = xml.GetAttrib(_T("zip"));
+                                    contactWithFields->contact.zip = item.AttributeValue(_T("zip"));
                                 }
-                                if (xml.FindAttrib(_T("comment"))) {
+                                if (item.Attribute(_T("comment"))) {
                                     contactWithFields->fields.AddTail(_T("comment"));
-                                    contactWithFields->contact.comment = xml.GetAttrib(_T("comment"));
+                                    contactWithFields->contact.comment = item.AttributeValue(_T("comment"));
                                 }
-                                if (xml.FindAttrib(_T("id"))) {
+                                if (item.Attribute(_T("id"))) {
                                     contactWithFields->fields.AddTail(_T("id"));
-                                    contactWithFields->contact.id = xml.GetAttrib(_T("id"));
+                                    contactWithFields->contact.id = item.AttributeValue(_T("id"));
                                 }
-                                if (xml.FindAttrib(_T("info"))) {
+                                if (item.Attribute(_T("info"))) {
                                     contactWithFields->fields.AddTail(_T("info"));
-                                    contactWithFields->contact.info = xml.GetAttrib(_T("info"));
+                                    contactWithFields->contact.info = item.AttributeValue(_T("info"));
                                 }
-                                if (xml.FindAttrib(_T("presence"))) {
+                                if (item.Attribute(_T("presence"))) {
                                     contactWithFields->fields.AddTail(_T("presence"));
-                                    CString rab = xml.GetAttrib(_T("presence"));
+                                    CString rab = item.AttributeValue(_T("presence"));
                                     contactWithFields->contact.presence = rab == _T("1");
                                 }
-                                if (xml.FindAttrib(_T("starred"))) {
+                                if (item.Attribute(_T("starred"))) {
                                     contactWithFields->fields.AddTail(_T("starred"));
-                                    CString rab = xml.GetAttrib(_T("starred"));
+                                    CString rab = item.AttributeValue(_T("starred"));
                                     contactWithFields->contact.starred = rab == _T("1");
                                 }
                                 if (pageContacts->GetContactsService()->ContactPrepare(contactWithFields->contact)) {
@@ -5935,31 +5940,30 @@ LRESULT CmainDlg::onUsersDirectoryLoaded(WPARAM wParam, LPARAM lParam)
                                 else {
                                     delete contactWithFields;
                                 }
-                                xml.OutOfElem();
                             }
                         }
-                        else if (xml.FindElem(_T("YealinkIPPhoneBook"))) {
-                            while (xml.FindChildElem(_T("Menu"))) {
-                                xml.IntoElem();
-                                while (xml.FindChildElem(_T("Unit"))) {
-                                    xml.IntoElem();
+                        else if (xml.name == _T("YealinkIPPhoneBook")) {
+                            for (int menuPos = xml.NextChild(-1, _T("Menu")); menuPos != -1; menuPos = xml.NextChild(menuPos, _T("Menu"))) {
+                                const Xml::Element& menu = xml.children[menuPos];
+                                for (int pos = menu.NextChild(-1, _T("Unit")); pos != -1; pos = menu.NextChild(pos, _T("Unit"))) {
+                                    const Xml::Element& item = menu.children[pos];
                                     contactWithFields = new ContactWithFields();
                                     contactWithFields->contact.directory = true;
-                                    if (xml.FindAttrib(_T("Name"))) {
+                                    if (item.Attribute(_T("Name"))) {
                                         contactWithFields->fields.AddTail(_T("name"));
-                                        contactWithFields->contact.name = xml.GetAttrib(_T("Name"));
+                                        contactWithFields->contact.name = item.AttributeValue(_T("Name"));
                                     }
-                                    if (xml.FindAttrib(_T("Phone1"))) {
+                                    if (item.Attribute(_T("Phone1"))) {
                                         contactWithFields->fields.AddTail(_T("number"));
-                                        contactWithFields->contact.number = xml.GetAttrib(_T("Phone1"));
+                                        contactWithFields->contact.number = item.AttributeValue(_T("Phone1"));
                                     }
-                                    if (xml.FindAttrib(_T("Phone2"))) {
+                                    if (item.Attribute(_T("Phone2"))) {
                                         contactWithFields->fields.AddTail(_T("phone"));
-                                        contactWithFields->contact.phone = xml.GetAttrib(_T("Phone2"));
+                                        contactWithFields->contact.phone = item.AttributeValue(_T("Phone2"));
                                     }
-                                    if (xml.FindAttrib(_T("Phone3"))) {
+                                    if (item.Attribute(_T("Phone3"))) {
                                         contactWithFields->fields.AddTail(_T("mobile"));
-                                        contactWithFields->contact.mobile = xml.GetAttrib(_T("Phone3"));
+                                        contactWithFields->contact.mobile = item.AttributeValue(_T("Phone3"));
                                     }
                                     if (pageContacts->GetContactsService()->ContactPrepare(contactWithFields->contact)) {
                                         contacts.Add(contactWithFields);
@@ -5967,48 +5971,55 @@ LRESULT CmainDlg::onUsersDirectoryLoaded(WPARAM wParam, LPARAM lParam)
                                     else {
                                         delete contactWithFields;
                                     }
-                                    xml.OutOfElem();
                                 }
-                                xml.OutOfElem();
                             }
                         }
                         else {
-                            while (xml.FindChildElem(_T("entry")) || xml.FindChildElem(_T("DirectoryEntry"))) {
-                                xml.IntoElem();
+                            // entries "entry" or "DirectoryEntry" and their children, searched as CMarkup did: from the last one
+                            // found, the first name before the second
+                            auto nextChild = [](const Xml::Element& parent, int after, LPCTSTR name1, LPCTSTR name2) {
+                                int index = parent.NextChild(after, name1);
+                                return index != -1 ? index : parent.NextChild(after, name2);
+                            };
+                            for (int pos = nextChild(xml, -1, _T("entry"), _T("DirectoryEntry")); pos != -1;
+                                pos = nextChild(xml, pos, _T("entry"), _T("DirectoryEntry"))) {
+                                const Xml::Element& item = xml.children[pos];
                                 contactWithFields = new ContactWithFields();
                                 contactWithFields->contact.directory = true;
-                                if (xml.FindChildElem(_T("extension")) || xml.FindChildElem(_T("Telephone"))) {
+                                int child = nextChild(item, -1, _T("extension"), _T("Telephone"));
+                                if (child != -1) {
                                     contactWithFields->fields.AddTail(_T("number"));
-                                    contactWithFields->contact.number = xml.GetChildData();
-                                    if (xml.FindChildElem(_T("extension")) || xml.FindChildElem(_T("Telephone"))) {
+                                    contactWithFields->contact.number = item.children[child].text;
+                                    child = nextChild(item, child, _T("extension"), _T("Telephone"));
+                                    if (child != -1) {
                                         contactWithFields->fields.AddTail(_T("phone"));
-                                        contactWithFields->contact.phone = xml.GetChildData();
+                                        contactWithFields->contact.phone = item.children[child].text;
+                                        child = nextChild(item, child, _T("extension"), _T("Telephone"));
+                                        if (child != -1) {
+                                            contactWithFields->fields.AddTail(_T("mobile"));
+                                            contactWithFields->contact.mobile = item.children[child].text;
+                                        }
                                     }
-                                    if (xml.FindChildElem(_T("extension")) || xml.FindChildElem(_T("Telephone"))) {
-                                        contactWithFields->fields.AddTail(_T("mobile"));
-                                        contactWithFields->contact.mobile = xml.GetChildData();
-                                    }
-                                    xml.ResetChildPos();
                                 }
-                                if (xml.FindChildElem(_T("name")) || xml.FindChildElem(_T("Name"))) {
+                                child = nextChild(item, -1, _T("name"), _T("Name"));
+                                if (child != -1) {
                                     contactWithFields->fields.AddTail(_T("name"));
-                                    contactWithFields->contact.name = xml.GetChildData();
-                                    xml.ResetChildPos();
+                                    contactWithFields->contact.name = item.children[child].text;
                                 }
-                                if (xml.FindChildElem(_T("info"))) {
+                                child = item.NextChild(-1, _T("info"));
+                                if (child != -1) {
                                     contactWithFields->fields.AddTail(_T("info"));
-                                    contactWithFields->contact.info = xml.GetChildData();
-                                    xml.ResetChildPos();
+                                    contactWithFields->contact.info = item.children[child].text;
                                 }
-                                if (xml.FindChildElem(_T("presence"))) {
+                                child = item.NextChild(-1, _T("presence"));
+                                if (child != -1) {
                                     contactWithFields->fields.AddTail(_T("presence"));
-                                    contactWithFields->contact.presence = xml.GetChildData() == _T("1");
-                                    xml.ResetChildPos();
+                                    contactWithFields->contact.presence = item.children[child].text == _T("1");
                                 }
-                                if (xml.FindChildElem(_T("starred"))) {
+                                child = item.NextChild(-1, _T("starred"));
+                                if (child != -1) {
                                     contactWithFields->fields.AddTail(_T("starred"));
-                                    contactWithFields->contact.starred = xml.GetChildData() == _T("1");
-                                    xml.ResetChildPos();
+                                    contactWithFields->contact.starred = item.children[child].text == _T("1");
                                 }
                                 if (pageContacts->GetContactsService()->ContactPrepare(contactWithFields->contact)) {
                                     contacts.Add(contactWithFields);
@@ -6016,7 +6027,6 @@ LRESULT CmainDlg::onUsersDirectoryLoaded(WPARAM wParam, LPARAM lParam)
                                 else {
                                     delete contactWithFields;
                                 }
-                                xml.OutOfElem();
                             }
                         }
                     }

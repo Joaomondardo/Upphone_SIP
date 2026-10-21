@@ -406,8 +406,6 @@
     </ClCompile>
     <ClCompile Include="lib\langpack.cpp" />
     <ClCompile Include="LevelsSliderCtrl.cpp" />
-    <ClCompile Include="lib\Markup.cpp" />
-    <ClCompile Include="lib\MessageBoxX.cpp" />
     <ClCompile Include="lib\ModelessMessageBox.cpp" />
     <ClCompile Include="lib\MSIP.cpp" />
     <ClCompile Include="lib\StdioFileEx.cpp" />
@@ -419,6 +417,7 @@
     <ClCompile Include="RinginDlg.cpp" />
     <ClCompile Include="Service\CallsService.cpp" />
     <ClCompile Include="Service\ContactsService.cpp" />
+    <ClCompile Include="Utils\Xml.cpp" />
     <ClCompile Include="settings.cpp" />
     <ClCompile Include="SettingsDlg.cpp" />
     <ClCompile Include="ShortcutsDlg.cpp" />
@@ -487,8 +486,6 @@
     <ClInclude Include="lib\jsoncpp\json\json.h" />
     <ClInclude Include="lib\langpack.h" />
     <ClInclude Include="LevelsSliderCtrl.h" />
-    <ClInclude Include="lib\Markup.h" />
-    <ClInclude Include="lib\MessageBoxX.h" />
     <ClInclude Include="lib\ModelessMessageBox.h" />
     <ClInclude Include="lib\MSIP.h" />
     <ClInclude Include="lib\StdioFileEx.h" />
@@ -520,6 +517,7 @@
     <ClInclude Include="Provisioning\ProvisioningSupport.h" />
     <ClInclude Include="Provisioning\UpdateDownload.h" />
     <ClInclude Include="Utils\StringConverter.h" />
+    <ClInclude Include="Utils\Xml.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\close.ico" />

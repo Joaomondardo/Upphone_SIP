@@ -21,17 +21,16 @@ Baseado em
 ----------
 - MicroSIP 3.22.16 Lite, Copyright (C) 2011-2025 MicroSIP
   (https://www.microsip.org), GPL versão 2 ou posterior.
-- pjproject (https://www.pjsip.org), GPL versão 2 ou posterior.
+- pjproject (https://www.pjsip.org), GPL versão 2 ou posterior, com uma
+  correção da Upp (build/pjproject/schannel-rand-bytes.patch).
 - bcg729 (G.729), Belledonne Communications, GPL versão 3.
 - SQLiteCpp, Sébastien Rombauts, licença MIT; SQLite, domínio público.
 - JsonCpp, Baptiste Lepilleur, domínio público / licença MIT.
 - HIDAPI, Alan Ott e colaboradores (licença BSD, GPL v3 ou HIDAPI).
 
-Componentes com licença em revisão
-----------------------------------
-Os componentes abaixo vêm do MicroSIP e trazem avisos próprios que restringem
-a redistribuição do código-fonte. A Upp está verificando a autorização ou a
-substituição deles (especificação UPP-SIP-ESP-001, seção 10.3):
-
-- CMarkup (lib/Markup.*), First Objective Software.
-- MessageBoxX (lib/MessageBoxX.*).
+Componentes retirados
+---------------------
+Os componentes CMarkup (First Objective Software) e MessageBoxX, que vinham
+do MicroSIP com avisos que restringiam a redistribuição do código-fonte,
+foram retirados na versão 1.4.0. O XML de contatos passou a ser lido e
+gravado por código próprio da Upp (Utils/Xml.cpp), sob a GPL versão 3.

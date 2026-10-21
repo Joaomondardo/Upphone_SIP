@@ -27,7 +27,7 @@
 #include "mainDlg.h"
 #include "langpack.h"
 #include "CSVFile.h"
-#include "Markup.h"
+// Upphone: Markup.h removed (CMarkup was not used here)
 #include "Domain/Call.h"
 #include "Data/Database.h"
 #include "Data/CallsRepository.h"

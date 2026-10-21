@@ -18,7 +18,7 @@
 
 #include "stdafx.h"
 #include "CallsService.h"
-#include "Markup.h"
+// Upphone: Markup.h removed (CMarkup was not used here)
 #include "CSVFile.h"
 #include "Utils/StringConverter.h"
 #include "langpack.h"

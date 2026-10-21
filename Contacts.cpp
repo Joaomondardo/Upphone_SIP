@@ -25,10 +25,10 @@
 #include "mainDlg.h"
 #include "langpack.h"
 #include "CSVFile.h"
-#include "Markup.h"
+#include "Utils/Xml.h" // Upphone: in place of CMarkup (Markup.h), whose license does not allow distributing its source
 #include "Transfer.h"
 #include "afxinet.h"
-#include "MessageBoxX.h"
+// Upphone: MessageBoxX.h removed (not used, and its license does not allow distributing a changed source)
 #include "Domain/Contact.h"
 #include "Data/Database.h"
 #include "Data/ContactsRepository.h"
@@ -908,32 +908,31 @@ void Contacts::ContactsSave()
 	if (IsFiltered()) {
 		FilterReset();
 	}
-	CMarkup xml;
-	xml.AddElem(_T("contacts"));
-	xml.IntoElem();
+	// Upphone: Utils/Xml writes the same document CMarkup wrote (see Utils/Xml.h)
+	Xml::Writer xml(_T("contacts"));
 
 	CListCtrl* list = (CListCtrl*)GetDlgItem(IDC_CONTACTS);
 	int count = list->GetItemCount();
 	for (int i = 0; i < count; i++) {
 		Contact* pContact = (Contact*)list->GetItemData(i);
-		xml.AddElem(_T("contact"));
-		xml.AddAttrib(_T("name"), pContact->name);
-		xml.AddAttrib(_T("number"), pContact->number);
-		xml.AddAttrib(_T("firstname"), pContact->firstname);
-		xml.AddAttrib(_T("lastname"), pContact->lastname);
-		xml.AddAttrib(_T("phone"), pContact->phone);
-		xml.AddAttrib(_T("mobile"), pContact->mobile);
-		xml.AddAttrib(_T("email"), pContact->email);
-		xml.AddAttrib(_T("address"), pContact->address);
-		xml.AddAttrib(_T("city"), pContact->city);
-		xml.AddAttrib(_T("state"), pContact->state);
-		xml.AddAttrib(_T("zip"), pContact->zip);
-		xml.AddAttrib(_T("comment"), pContact->comment);
-		xml.AddAttrib(_T("id"), pContact->id);
-		xml.AddAttrib(_T("info"), pContact->info);
-		xml.AddAttrib(_T("presence"), pContact->presence ? _T("1") : _T("0"));
-		xml.AddAttrib(_T("starred"), pContact->starred ? _T("1") : _T("0"));
-		xml.AddAttrib(_T("directory"), pContact->directory ? _T("1") : _T("0"));
+		xml.AddChild(_T("contact"));
+		xml.AddAttribute(_T("name"), pContact->name);
+		xml.AddAttribute(_T("number"), pContact->number);
+		xml.AddAttribute(_T("firstname"), pContact->firstname);
+		xml.AddAttribute(_T("lastname"), pContact->lastname);
+		xml.AddAttribute(_T("phone"), pContact->phone);
+		xml.AddAttribute(_T("mobile"), pContact->mobile);
+		xml.AddAttribute(_T("email"), pContact->email);
+		xml.AddAttribute(_T("address"), pContact->address);
+		xml.AddAttribute(_T("city"), pContact->city);
+		xml.AddAttribute(_T("state"), pContact->state);
+		xml.AddAttribute(_T("zip"), pContact->zip);
+		xml.AddAttribute(_T("comment"), pContact->comment);
+		xml.AddAttribute(_T("id"), pContact->id);
+		xml.AddAttribute(_T("info"), pContact->info);
+		xml.AddAttribute(_T("presence"), pContact->presence ? _T("1") : _T("0"));
+		xml.AddAttribute(_T("starred"), pContact->starred ? _T("1") : _T("0"));
+		xml.AddAttribute(_T("directory"), pContact->directory ? _T("1") : _T("0"));
 	}
 
 	CString filename = accountSettings.pathRoaming;
@@ -971,42 +970,51 @@ void Contacts::ContactsLoad()
 			data.ReleaseBuffer(len);
 		} while (i > 0);
 		file.Close();
-		CMarkup xml;
-		BOOL bResult = xml.SetDoc(MSIP::Utf8DecodeUni(data));
+		// Upphone: Utils/Xml reads the document as CMarkup did (see Utils/Xml.h)
+		Xml::Element xml;
+		// Upphone: the versions before 1.4.0 wrote Contacts.xml in the ANSI code page of Windows (see
+		// MSIP::Utf8EncodeUni): a file that is not valid UTF-8 is read as ANSI, so its accents come back
+		CString doc;
+		if (data.IsEmpty() || MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, data, -1, nullptr, 0) > 0) {
+			doc = MSIP::Utf8DecodeUni(data);
+		}
+		else {
+			doc = CString(CA2W(data, CP_ACP));
+		}
+		BOOL bResult = Xml::Parse(doc, xml);
 		if (bResult) {
-			if (xml.FindElem(_T("contacts"))) {
-				while (xml.FindChildElem(_T("contact"))) {
-					xml.IntoElem();
+			if (xml.name == _T("contacts")) {
+				for (int pos = xml.NextChild(-1, _T("contact")); pos != -1; pos = xml.NextChild(pos, _T("contact"))) {
+					const Xml::Element& item = xml.children[pos];
 					Contact contact;
-					contact.name = xml.GetAttrib(_T("name"));
-					contact.number = xml.GetAttrib(_T("number"));
-					contact.firstname = xml.GetAttrib(_T("firstname"));
-					contact.lastname = xml.GetAttrib(_T("lastname"));
-					contact.phone = xml.GetAttrib(_T("phone"));
-					contact.mobile = xml.GetAttrib(_T("mobile"));
-					contact.email = xml.GetAttrib(_T("email"));
-					contact.address = xml.GetAttrib(_T("address"));
-					contact.city = xml.GetAttrib(_T("city"));
-					contact.state = xml.GetAttrib(_T("state"));
-					contact.zip = xml.GetAttrib(_T("zip"));
-					contact.comment = xml.GetAttrib(_T("comment"));
-					contact.id = xml.GetAttrib(_T("id"));
+					contact.name = item.AttributeValue(_T("name"));
+					contact.number = item.AttributeValue(_T("number"));
+					contact.firstname = item.AttributeValue(_T("firstname"));
+					contact.lastname = item.AttributeValue(_T("lastname"));
+					contact.phone = item.AttributeValue(_T("phone"));
+					contact.mobile = item.AttributeValue(_T("mobile"));
+					contact.email = item.AttributeValue(_T("email"));
+					contact.address = item.AttributeValue(_T("address"));
+					contact.city = item.AttributeValue(_T("city"));
+					contact.state = item.AttributeValue(_T("state"));
+					contact.zip = item.AttributeValue(_T("zip"));
+					contact.comment = item.AttributeValue(_T("comment"));
+					contact.id = item.AttributeValue(_T("id"));
 					CString rab;
-					rab = xml.GetAttrib(_T("presence"));
+					rab = item.AttributeValue(_T("presence"));
 					contact.presence = rab == _T("1");
-					rab = xml.GetAttrib(_T("starred"));
+					rab = item.AttributeValue(_T("starred"));
 					contact.starred = rab == _T("1");
-					rab = xml.GetAttrib(_T("directory"));
+					rab = item.AttributeValue(_T("directory"));
 					contact.directory = rab == _T("1");
 					if (contact.presence || contact.directory) {
-						contact.info = xml.GetAttrib(_T("info"));
+						contact.info = item.AttributeValue(_T("info"));
 					}
 					if (!contact.number.IsEmpty()) {
 						if (!IsFiltered(contact)) {
 							ContactAdd(contact, FALSE, TRUE);
 						}
 					}
-					xml.OutOfElem();
 				}
 			}
 		}
